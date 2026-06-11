@@ -349,6 +349,7 @@ function renderBookingsTable(data) {
           <td>${sP(b.status)}</td>
           <td>
             <div class="tbl-actions">
+              ${b.status==='pending' ? `<button class="btn btn-primary btn-sm" onclick="confirmPayment('${b.id}','${(b.profiles?.full_name||'').replace(/'/g,'')}')">✓ Confirm Payment</button>` : ''}
               ${b.status==='confirmed' ? `<button class="btn btn-primary btn-sm" onclick="markComplete('${b.id}')">✓ Mark Complete</button>` : ''}
               ${b.status==='completed' ? `<button class="btn btn-outline-green btn-sm" onclick="issueCert('${b.id}')">🎓 Issue Cert</button>` : ''}
             </div>
@@ -561,6 +562,13 @@ function renderCerts(data) {
 }
 
 // ── Admin actions ─────────────────────────────────────────
+async function confirmPayment(id, name) {
+  if (!confirm('Confirm manual payment received from ' + (name || 'this student') + '? This will mark their booking as confirmed and paid.')) return;
+  const { error } = await getSB().from('bookings').update({ status: 'confirmed', payment_status: 'paid' }).eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  await loadAllBookings();
+}
+
 async function markComplete(id) {
   if (!confirm('Confirm this student has completed the course?')) return;
   await getSB().from('bookings').update({ status:'completed' }).eq('id', id);
