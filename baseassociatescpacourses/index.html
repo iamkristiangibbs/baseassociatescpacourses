@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Base Associates CPA — Professional Training Platform</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    /* ── Hero ── */
+    .hero { background:var(--gradient-hero); padding:110px 0 100px; position:relative; overflow:hidden; }
+    .hero::before {
+      content:''; position:absolute; inset:0;
+      background:url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Crect x='0' y='0' width='2' height='2'/%3E%3Crect x='40' y='40' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-inner { position:relative; max-width:760px; }
+    .hero h1 { font-size:clamp(2.2rem,5vw,3.6rem); color:var(--white); margin:18px 0 20px; line-height:1.1; }
+    .hero h1 em { font-style:italic; color:var(--gold-light); }
+    .hero p { color:rgba(255,255,255,.82); font-size:1.05rem; margin-bottom:36px; max-width:580px; }
+    .hero-btns { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:60px; }
+    .hero-stats { display:flex; gap:40px; flex-wrap:wrap; padding-top:40px; border-top:1px solid rgba(255,255,255,.15); }
+    .hero-stat .num { font-family:var(--font-display); font-size:1.8rem; color:var(--gold-light); font-weight:600; }
+    .hero-stat .lbl { font-size:12px; color:rgba(255,255,255,.6); text-transform:uppercase; letter-spacing:.07em; margin-top:2px; }
+
+    /* ── CPD strip ── */
+    .cpd-strip { background:var(--green-dark); padding:52px 0; }
+    .cpd-grid  { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:0; }
+    .cpd-item  { text-align:center; color:var(--white); padding:24px 32px; border-right:1px solid rgba(255,255,255,.1); }
+    .cpd-item:last-child { border-right:none; }
+    .cpd-icon  { font-size:2rem; margin-bottom:12px; }
+    .cpd-item h4 { font-size:1rem; margin-bottom:8px; color:var(--white); }
+    .cpd-item p  { font-size:13px; color:rgba(255,255,255,.55); line-height:1.6; }
+
+    /* ── Testimonials ── */
+    .testi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:24px; }
+    .testi-card { background:var(--white); border:1.5px solid var(--cream-dark); border-radius:var(--radius-lg); padding:28px; position:relative; }
+    .testi-card::before { content:'❝'; font-family:var(--font-display); font-size:3.5rem; color:var(--green-pale); position:absolute; top:10px; right:18px; line-height:1; }
+    .testi-card .stars { color:var(--gold); font-size:14px; margin-bottom:12px; }
+    .testi-card p { font-size:14px; color:var(--text-muted); line-height:1.75; margin-bottom:18px; }
+    .testi-author { display:flex; align-items:center; gap:12px; }
+    .testi-name { font-weight:700; font-size:13px; color:var(--text-dark); }
+    .testi-role { font-size:12px; color:var(--text-muted); margin-top:1px; }
+
+    @media(max-width:768px){ .hero-stats{gap:24px;} .cpd-item{border-right:none;border-bottom:1px solid rgba(255,255,255,.1);} }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="site-nav has-mobile-nav">
+  <a href="index.html" class="nav-brand">
+    <img src="logo.png" alt="Base Associates CPA" style="height:52px;width:auto;display:block;">
+    <div class="nav-brand-text">
+      <span class="name">base associates</span>
+      <span class="sub">Certified Public Accountants</span>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html"        class="nav-link active">Home</a>
+    <a href="courses.html"      class="nav-link">Courses</a>
+    <a href="dashboard.html"    class="nav-link">Dashboard</a>
+    <a href="admin.html"        class="nav-link">Admin</a>
+  </div>
+  <div class="nav-right">
+    <a href="login.html"    class="nav-link">Login</a>
+    <a href="courses.html"  class="nav-cta">📚 Browse Courses</a>
+  </div>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-mobile-menu" id="nav-mobile-menu">
+  <a href="index.html"     class="mob-nav-link active">Home</a>
+  <a href="courses.html"   class="mob-nav-link">Courses</a>
+  <a href="dashboard.html" class="mob-nav-link">Dashboard</a>
+  <a href="admin.html"     class="mob-nav-link">Admin</a>
+  <hr class="mob-divider">
+  <a href="login.html"   class="mob-nav-link">Login</a>
+  <a href="courses.html" class="mob-nav-link mob-cta">📚 Browse Courses</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <span class="tag tag-white">ICPAU Accredited CPD Courses</span>
+      <h1>Professional Finance &amp; Tax Training for <em>Modern Business</em></h1>
+      <p>Advance your accounting, taxation, bookkeeping and financial management skills with practical short courses from Uganda's trusted CPA firm — Base Associates.</p>
+      <div class="hero-btns">
+        <a href="courses.html" class="btn btn-gold btn-lg">Browse All 20 Courses →</a>
+        <a href="#cpd"         class="btn btn-outline-white btn-lg">Explore CPD Benefits</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="num">20</div><div class="lbl">Short Courses</div></div>
+        <div class="hero-stat"><div class="num">3-Day</div><div class="lbl">Per Course</div></div>
+        <div class="hero-stat"><div class="num">UGX 100K</div><div class="lbl">Per Course</div></div>
+        <div class="hero-stat"><div class="num">ICPAU</div><div class="lbl">Accredited</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRAM OVERVIEW -->
+<section class="section" style="background:var(--cream);">
+  <div class="container">
+    <div class="section-header centered">
+      <span class="tag tag-gold">Program Overview</span>
+      <h2>Flexible Learning That Fits Your Life</h2>
+      <p>Each course runs over 3 days with 5 daily session slots — so you can learn around work, not instead of it.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;">
+      <div style="background:var(--white);padding:28px;border-radius:var(--radius-lg);box-shadow:var(--shadow);text-align:center;">
+        <div style="font-size:2rem;margin-bottom:12px;">📅</div>
+        <h4>3-Day Format</h4>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:8px;">Each course delivered across 3 consecutive days — structured for maximum retention.</p>
+      </div>
+      <div style="background:var(--white);padding:28px;border-radius:var(--radius-lg);box-shadow:var(--shadow);text-align:center;">
+        <div style="font-size:2rem;margin-bottom:12px;">⏰</div>
+        <h4>5 Daily Sessions</h4>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:8px;">Early morning, lunch hour, early evening, late evening and midnight slots available.</p>
+      </div>
+      <div style="background:var(--white);padding:28px;border-radius:var(--radius-lg);box-shadow:var(--shadow);text-align:center;">
+        <div style="font-size:2rem;margin-bottom:12px;">💻</div>
+        <h4>100% Online</h4>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:8px;">Live interactive sessions delivered via Zoom. Join from anywhere in Uganda or abroad.</p>
+      </div>
+      <div style="background:var(--white);padding:28px;border-radius:var(--radius-lg);box-shadow:var(--shadow);text-align:center;">
+        <div style="font-size:2rem;margin-bottom:12px;">🎓</div>
+        <h4>CPD Certificate</h4>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:8px;">ICPAU-recognised CPD certificate issued immediately upon course completion.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED COURSES -->
+<section class="section">
+  <div class="container">
+    <div class="section-header centered">
+      <span class="tag">Featured Courses</span>
+      <h2>Most Popular Professional Courses</h2>
+      <p>Practical CPA-focused training for professionals, SMEs and entrepreneurs across Uganda.</p>
+    </div>
+    <div class="course-grid">
+
+      <a href="booking.html?id=1" class="course-card">
+        <div class="card-top-bar"></div>
+        <div class="card-body">
+          <div class="card-meta"><span class="badge badge-green">Accounting</span><span class="badge badge-gold">3 Days</span></div>
+          <h3 class="card-title">Elementary Bookkeeping &amp; Accounts Record Keeping for Non-Accountants</h3>
+          <p class="card-desc">Master practical double-entry bookkeeping and financial record management that every business owner and finance officer needs.</p>
+          <div class="card-info">
+            <span>📅 3 Days</span><span>💻 Online</span>
+            <span>⏰ 5 Time Slots</span><span>🎓 CPD Certificate</span>
+          </div>
+          <div class="card-footer">
+            <div><div class="card-price">UGX 100,000</div></div>
+            <button class="btn btn-primary btn-sm">Book Now</button>
+          </div>
+        </div>
+      </a>
+
+      <a href="booking.html?id=13" class="course-card">
+        <div class="card-top-bar"></div>
+        <div class="card-body">
+          <div class="card-meta"><span class="badge badge-green">Taxation</span><span class="badge badge-gold">3 Days</span></div>
+          <h3 class="card-title">How to Prepare Monthly VAT Returns for Companies</h3>
+          <p class="card-desc">Step-by-step VAT return preparation, URA filing procedures and compliance reporting for Ugandan companies.</p>
+          <div class="card-info">
+            <span>📅 3 Days</span><span>💻 Online</span>
+            <span>⏰ 5 Time Slots</span><span>🎓 CPD Certificate</span>
+          </div>
+          <div class="card-footer">
+            <div><div class="card-price">UGX 100,000</div></div>
+            <button class="btn btn-primary btn-sm">Book Now</button>
+          </div>
+        </div>
+      </a>
+
+      <a href="booking.html?id=6" class="course-card">
+        <div class="card-top-bar"></div>
+        <div class="card-body">
+          <div class="card-meta"><span class="badge badge-green">Finance</span><span class="badge badge-gold">3 Days</span></div>
+          <h3 class="card-title">Effective Tools for Proper Working Capital Management</h3>
+          <p class="card-desc">Improve liquidity, optimise cash flow cycles and build operational efficiency for your business or clients.</p>
+          <div class="card-info">
+            <span>📅 3 Days</span><span>💻 Online</span>
+            <span>⏰ 5 Time Slots</span><span>🎓 CPD Certificate</span>
+          </div>
+          <div class="card-footer">
+            <div><div class="card-price">UGX 100,000</div></div>
+            <button class="btn btn-primary btn-sm">Book Now</button>
+          </div>
+        </div>
+      </a>
+
+    </div>
+    <div style="text-align:center;margin-top:40px;">
+      <a href="courses.html" class="btn btn-outline-green btn-lg">View All 20 Courses →</a>
+    </div>
+  </div>
+</section>
+
+<!-- CPD STRIP -->
+<section class="cpd-strip" id="cpd">
+  <div class="container">
+    <div class="cpd-grid">
+      <div class="cpd-item">
+        <div class="cpd-icon">📋</div>
+        <h4>What Are CPD Hours?</h4>
+        <p>Continuing Professional Development hours are mandatory for ICPAU-licensed accountants to maintain their practising certificates each year.</p>
+      </div>
+      <div class="cpd-item">
+        <div class="cpd-icon">🎯</div>
+        <h4>Annual Requirement</h4>
+        <p>ICPAU members must complete 40 verifiable CPD hours annually. Each Base Associates short course earns you structured CPD credit.</p>
+      </div>
+      <div class="cpd-item">
+        <div class="cpd-icon">📜</div>
+        <h4>Instant Certificates</h4>
+        <p>Download your CPD certificate immediately after completing any course — ready for submission to ICPAU.</p>
+      </div>
+      <div class="cpd-item">
+        <div class="cpd-icon">🏛️</div>
+        <h4>ICPAU Recognised</h4>
+        <p>All courses are designed and delivered in compliance with ICPAU CPD requirements by practising Certified Public Accountants.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section" style="background:var(--cream);">
+  <div class="container">
+    <div class="section-header centered">
+      <span class="tag">Testimonials</span>
+      <h2>What Our Learners Say</h2>
+      <p>Real feedback from finance professionals, SME owners and accountants across Uganda.</p>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="stars">★★★★★</div>
+        <p>"The bookkeeping course completely changed how I manage my client records. Practical, clear and delivered by a real accountant who understands Ugandan business."</p>
+        <div class="testi-author">
+          <div class="avatar av-sm av-green">JM</div>
+          <div><div class="testi-name">James Mukasa</div><div class="testi-role">Accounts Officer, Kampala</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="stars">★★★★★</div>
+        <p>"The VAT returns course saved me hours every month. I now file confidently on URA's e-Tax portal without needing to outsource. Worth every shilling."</p>
+        <div class="testi-author">
+          <div class="avatar av-sm av-gold">AK</div>
+          <div><div class="testi-name">Amina Kasule</div><div class="testi-role">Tax Consultant, Entebbe</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="stars">★★★★★</div>
+        <p>"Excellent instruction and very relevant content. The flexible session times made it easy to attend while managing my consultancy. I earned my CPD hours stress-free."</p>
+        <div class="testi-author">
+          <div class="avatar av-sm av-dark">PO</div>
+          <div><div class="testi-name">Patrick Oryem</div><div class="testi-role">CFO, Gulu</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="cta-banner">
+  <div class="container">
+    <h2>Ready to Advance Your Professional Career?</h2>
+    <p>Join thousands of accountants and finance professionals across Uganda who trust Base Associates CPA for their continuing professional development.</p>
+    <div class="cta-btns">
+      <a href="courses.html"  class="btn btn-outline-white btn-lg">Browse All Courses →</a>
+      <a href="register.html" class="btn btn-gold btn-lg">Create Free Account</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="name">base associates <span>CPA</span></div>
+        <p>A multi-skilled team of experts providing comprehensive financial and management consultancy services in Uganda and beyond — with integrity, expertise and personalised solutions.</p>
+        <div class="footer-social">
+          <a href="#">in</a><a href="#">𝕏</a><a href="#">f</a><a href="#">▶</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Courses</h4>
+        <a href="courses.html">All Courses</a>
+        <a href="courses.html">Taxation</a>
+        <a href="courses.html">Accounting</a>
+        <a href="courses.html">Finance</a>
+        <a href="courses.html">Entrepreneurship</a>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <a href="dashboard.html">My Dashboard</a>
+        <a href="dashboard.html">CPD Tracker</a>
+        <a href="dashboard.html">My Certificates</a>
+        <a href="login.html">Login</a>
+        <a href="register.html">Register</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">Cancellation Policy</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Base Associates CPA. All rights reserved.</span>
+      <span>ICPAU Accredited CPD Provider · Kampala, Uganda</span>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+(async () => {
+  const user = await getUser();
+  const navRight = document.querySelector('.nav-right');
+  if (user && navRight) {
+    const profile = await getProfile(user.id);
+    const initials = (profile?.full_name || user.email)[0].toUpperCase();
+    navRight.innerHTML =
+      '<div class="nav-user" style="display:flex;align-items:center;gap:8px;">'
+      + '<div class="nav-avatar">' + initials + '</div>'
+      + '<span style="font-size:13px;font-weight:600;color:var(--green);">' + (profile?.full_name || 'Account') + '</span>'
+      + '</div>'
+      + '<a href="dashboard.html" class="nav-link">Dashboard</a>'
+      + '<button class="nav-link" onclick="getSB().auth.signOut().then(()=>window.location.reload())">Logout</button>';
+  }
+})();
+</script>
+
+</body>
+</html>

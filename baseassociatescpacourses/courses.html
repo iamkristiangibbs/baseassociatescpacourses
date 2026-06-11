@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Courses | Base Associates CPA</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    .cat-hero{background:var(--green-dark);padding:52px 0}
+    .cat-hero h1{color:var(--white);font-size:clamp(1.8rem,3vw,2.5rem);margin-bottom:8px}
+    .cat-hero p{color:rgba(255,255,255,.65);font-size:1rem}
+    .filter-bar{background:var(--white);border-bottom:1px solid var(--cream-dark);padding:20px 0;position:sticky;top:68px;z-index:100;box-shadow:var(--shadow-sm)}
+    .filter-inner{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .filter-select{padding:9px 30px 9px 14px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-md);font-family:var(--font-body);font-size:13px;color:var(--text-dark);background:var(--white);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7E72' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;min-width:160px;transition:border-color .2s}
+    .filter-select:focus{outline:none;border-color:var(--green)}
+    .search-box{display:flex;align-items:center;border:1.5px solid var(--cream-dark);border-radius:var(--radius-md);background:var(--white);overflow:hidden;transition:border-color .2s}
+    .search-box:focus-within{border-color:var(--green)}
+    .search-box span{padding:0 10px 0 14px;color:var(--text-muted);font-size:15px}
+    .search-box input{border:none;outline:none;font-family:var(--font-body);font-size:13px;padding:9px 12px 9px 0;width:220px;color:var(--text-dark)}
+    .timetable-box{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--radius-lg);padding:28px;margin-bottom:32px}
+    .timetable-box h3{font-size:1.1rem;margin-bottom:16px}
+    .time-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .time-item{background:var(--cream);border-radius:var(--radius-md);padding:14px 16px}
+    .time-item .slot-name{font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+    .time-item .slot-time{font-size:14px;font-weight:600;color:var(--text-dark)}
+    .results-label{font-size:13px;color:var(--text-muted);margin-bottom:24px}
+    .no-results{text-align:center;padding:72px 20px;color:var(--text-muted);grid-column:1/-1}
+    .no-results .icon{font-size:3rem;margin-bottom:14px}
+  </style>
+</head>
+<body>
+
+<nav class="site-nav has-mobile-nav">
+  <a href="index.html" class="nav-brand">
+    <img src="logo.png" alt="Base Associates CPA" style="height:52px;width:auto;display:block;">
+    <div class="nav-brand-text">
+      <span class="name">base associates</span>
+      <span class="sub">Certified Public Accountants</span>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html"     class="nav-link">Home</a>
+    <a href="courses.html"   class="nav-link active">Courses</a>
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="admin.html"     class="nav-link">Admin</a>
+  </div>
+  <div class="nav-right" id="nav-right">
+    <a href="login.html"    class="nav-link">Login</a>
+    <a href="register.html" class="nav-cta">Register</a>
+  </div>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-mobile-menu" id="nav-mobile-menu">
+  <a href="index.html"     class="mob-nav-link">Home</a>
+  <a href="courses.html"   class="mob-nav-link active">Courses</a>
+  <a href="dashboard.html" class="mob-nav-link">Dashboard</a>
+  <a href="admin.html"     class="mob-nav-link">Admin</a>
+  <hr class="mob-divider">
+  <a href="login.html"    class="mob-nav-link">Login</a>
+  <a href="register.html" class="mob-nav-link mob-cta">Register Free</a>
+</div>
+
+<div class="cat-hero">
+  <div class="container">
+    <span class="tag tag-white">Online Short Courses</span>
+    <h1>Professional CPA Training Programs</h1>
+    <p>Practical accounting, taxation, finance and business management — 3 days · 5 session times · UGX 100,000 per course</p>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <div class="container">
+    <div class="filter-inner">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="search-input" placeholder="Search courses…" oninput="filterCourses()">
+      </div>
+      <select class="filter-select" id="filter-cat" onchange="filterCourses()">
+        <option value="">All Categories</option>
+        <option value="accounting">Accounting</option>
+        <option value="taxation">Taxation</option>
+        <option value="finance">Finance</option>
+        <option value="management">Management</option>
+        <option value="compliance">Compliance</option>
+        <option value="business">Business</option>
+      </select>
+      <select class="filter-select" id="filter-sort" onchange="filterCourses()">
+        <option value="default">Sort: Default</option>
+        <option value="az">A → Z</option>
+        <option value="za">Z → A</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px;">
+      <div style="background:var(--green-pale);border-radius:var(--radius-md);padding:20px 22px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--green);margin-bottom:4px;">Programme</div>
+        <div style="font-weight:700;color:var(--text-dark);">Online Short Courses</div>
+      </div>
+      <div style="background:var(--gold-pale);border-radius:var(--radius-md);padding:20px 22px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8B6914;margin-bottom:4px;">Duration</div>
+        <div style="font-weight:700;color:var(--text-dark);">3 Days Per Course</div>
+      </div>
+      <div style="background:var(--cream);border-radius:var(--radius-md);padding:20px 22px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:4px;">Course Fee</div>
+        <div style="font-weight:700;color:var(--text-dark);">UGX 100,000 Per Course</div>
+      </div>
+      <div style="background:var(--cream);border-radius:var(--radius-md);padding:20px 22px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:4px;">Delivery</div>
+        <div style="font-weight:700;color:var(--text-dark);">100% Online via Zoom</div>
+      </div>
+    </div>
+
+    <div class="timetable-box">
+      <span class="tag tag-gold" style="margin-bottom:10px;">Attendance Timetable</span>
+      <h3>Choose Any Session That Suits You</h3>
+      <div class="time-grid">
+        <div class="time-item"><div class="slot-name">Early Morning</div><div class="slot-time">8:00 AM — 10:00 AM</div></div>
+        <div class="time-item"><div class="slot-name">Lunch Hour</div><div class="slot-time">12:00 PM — 2:00 PM</div></div>
+        <div class="time-item"><div class="slot-name">Early Evening</div><div class="slot-time">4:00 PM — 6:00 PM</div></div>
+        <div class="time-item"><div class="slot-name">Late Evening</div><div class="slot-time">8:00 PM — 10:00 PM</div></div>
+        <div class="time-item"><div class="slot-name">Midnight</div><div class="slot-time">12:00 AM — 2:00 AM</div></div>
+      </div>
+    </div>
+
+    <div class="results-label" id="results-label">Showing all 20 courses</div>
+    <div class="course-grid" id="course-grid"></div>
+
+  </div>
+</section>
+
+<section class="cta-banner">
+  <div class="container">
+    <h2>Ready to Start Learning?</h2>
+    <p>UGX 100,000 per course. Pick any session time. Register in minutes.</p>
+    <div class="cta-btns">
+      <a href="register.html" class="btn btn-outline-white btn-lg">Create Free Account →</a>
+      <a href="login.html"    class="btn btn-gold btn-lg">Log In to Book</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="name">base associates <span>CPA</span></div>
+        <p>A multi-skilled team of experts providing comprehensive financial and management consultancy services in Uganda and beyond.</p>
+      </div>
+      <div class="footer-col"><h4>Courses</h4><a href="courses.html">All Courses</a><a href="courses.html">Taxation</a><a href="courses.html">Accounting</a><a href="courses.html">Finance</a></div>
+      <div class="footer-col"><h4>Platform</h4><a href="dashboard.html">Dashboard</a><a href="login.html">Login</a><a href="register.html">Register</a></div>
+      <div class="footer-col"><h4>Company</h4><a href="#">Contact</a><a href="#">Privacy Policy</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Base Associates CPA. All rights reserved.</span>
+      <span>ICPAU Accredited · Kampala, Uganda</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+function badgeColour(b){ return ['Taxation','Compliance'].includes(b)?'badge-gold':'badge-green'; }
+
+function renderCard(c){
+  return `
+  <a href="booking.html?id=${c.id}" class="course-card">
+    <div class="card-top-bar"></div>
+    <div class="card-body">
+      <div class="card-meta">
+        <span class="badge ${badgeColour(c.badge)}">${c.badge}</span>
+        <span class="badge badge-cream">3 Days</span>
+      </div>
+      <h3 class="card-title">${c.title}</h3>
+      <p class="card-desc">${c.desc}</p>
+      <div class="card-info">
+        <span>📅 3 Days</span>
+        <span>💻 Online</span>
+        <span>⏰ 5 Time Slots</span>
+        <span>🎓 CPD Certificate</span>
+      </div>
+      <div class="card-footer">
+        <div class="card-price">UGX 100,000</div>
+        <button class="btn btn-primary btn-sm" onclick="event.preventDefault();window.location='booking.html?id=${c.id}'">Book Now</button>
+      </div>
+    </div>
+  </a>`;
+}
+
+function filterCourses(){
+  const q    = document.getElementById('search-input').value.toLowerCase();
+  const cat  = document.getElementById('filter-cat').value;
+  const sort = document.getElementById('filter-sort').value;
+
+  let list = COURSES.filter(c=>{
+    if(q   && !c.title.toLowerCase().includes(q)) return false;
+    if(cat && c.cat !== cat)                       return false;
+    return true;
+  });
+
+  if(sort==='az') list = [...list].sort((a,b)=>a.title.localeCompare(b.title));
+  if(sort==='za') list = [...list].sort((a,b)=>b.title.localeCompare(a.title));
+
+  const grid  = document.getElementById('course-grid');
+  const label = document.getElementById('results-label');
+  label.textContent = `Showing ${list.length} of ${COURSES.length} courses`;
+  grid.innerHTML = list.length
+    ? list.map(renderCard).join('')
+    : `<div class="no-results"><div class="icon">🔍</div><p>No courses match your search.</p></div>`;
+}
+
+filterCourses();
+
+// Update nav if already logged in
+(async () => {
+  const user = await getUser();
+  const navRight = document.getElementById('nav-right');
+  if (user && navRight) {
+    const profile = await getProfile(user.id);
+    const initial = (profile?.full_name || user.email)[0].toUpperCase();
+    navRight.innerHTML =
+      '<div class="nav-user" style="display:flex;align-items:center;gap:8px;">'
+      + '<div class="nav-avatar">' + initial + '</div>'
+      + '<span style="font-size:13px;font-weight:600;color:var(--green);">' + (profile?.full_name||'Account') + '</span>'
+      + '</div>'
+      + '<a href="dashboard.html" class="nav-link">Dashboard</a>'
+      + '<button class="nav-link" onclick="getSB().auth.signOut().then(()=>window.location.reload())">Logout</button>';
+  }
+})();
+</script>
+
+</body>
+</html>

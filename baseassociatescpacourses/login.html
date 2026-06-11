@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | Base Associates CPA</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html" class="nav-brand">
+    <img src="logo.png" alt="Base Associates CPA" style="height:52px;width:auto;display:block;">
+    <div class="nav-brand-text">
+      <span class="name">base associates</span>
+      <span class="sub">Certified Public Accountants</span>
+    </div>
+  </a>
+  <div class="nav-right">
+    <a href="register.html" class="nav-cta">Create Account</a>
+  </div>
+</nav>
+
+<div class="auth-wrap">
+  <div style="width:100%;max-width:440px;">
+
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;background:var(--green-dark);border-radius:12px;font-family:var(--font-display);font-size:24px;color:var(--white);font-weight:700;margin-bottom:12px;">B</div>
+      <div style="font-weight:700;font-size:15px;color:var(--green);">base associates</div>
+      <div style="font-size:11px;color:var(--text-muted);">Certified Public Accountants</div>
+    </div>
+
+    <div class="auth-card">
+      <span class="tag">Account Access</span>
+      <h2>Welcome Back</h2>
+      <p class="subtitle">Sign in to access your dashboard, bookings and CPD tracker.</p>
+
+      <div class="alert alert-danger" id="err-msg">⚠ <span id="err-text"></span></div>
+      <div class="alert alert-success" id="ok-msg">✓ <span id="ok-text"></span></div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email"/>
+        <div class="field-error" id="e-email">Please enter a valid email address.</div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password"/>
+        <div class="field-error" id="e-password">Please enter your password.</div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:-4px 0 20px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);cursor:pointer;">
+          <input type="checkbox" id="remember-me" style="width:auto;accent-color:var(--green);"/> Remember me
+        </label>
+        <a href="forgot-password.html" class="auth-link" style="font-size:13px;">Forgot password?</a>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()" style="margin-bottom:14px;">
+        Sign In →
+      </button>
+
+      <p style="text-align:center;margin-top:22px;font-size:13px;color:var(--text-muted);">
+        Don't have an account? <a href="register.html" class="auth-link">Register free</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Check if already logged in
+(async () => {
+  const user = await getUser();
+  if (user) {
+    const profile = await getProfile(user.id);
+    window.location.href = (profile?.role === 'admin') ? 'admin.html' : 'dashboard.html';
+  }
+  // Show post-registration message
+  const msg = new URLSearchParams(window.location.search).get('msg');
+  if (msg === 'registered') showOk('Account created! Please check your email to confirm, then sign in.');
+  if (msg === 'reset')      showOk('Password reset email sent. Check your inbox.');
+})();
+
+function showErr(msg) {
+  document.getElementById('err-text').textContent = msg;
+  document.getElementById('err-msg').classList.add('show');
+  document.getElementById('ok-msg').classList.remove('show');
+}
+function showOk(msg) {
+  document.getElementById('ok-text').textContent = msg;
+  document.getElementById('ok-msg').classList.add('show');
+  document.getElementById('err-msg').classList.remove('show');
+}
+
+async function doLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  let valid = true;
+
+  document.getElementById('e-email').classList.remove('show');
+  document.getElementById('e-password').classList.remove('show');
+  document.getElementById('login-email').classList.remove('input-error');
+  document.getElementById('login-password').classList.remove('input-error');
+
+  if (!email || !email.includes('@')) {
+    document.getElementById('e-email').classList.add('show');
+    document.getElementById('login-email').classList.add('input-error');
+    valid = false;
+  }
+  if (!password) {
+    document.getElementById('e-password').classList.add('show');
+    document.getElementById('login-password').classList.add('input-error');
+    valid = false;
+  }
+  if (!valid) return;
+
+  const btn = document.getElementById('login-btn');
+  btn.innerHTML = '<div class="spinner"></div> Signing in…';
+  btn.disabled = true;
+
+  const { data, error } = await getSB().auth.signInWithPassword({ email, password });
+
+  if (error) {
+    showErr(error.message === 'Invalid login credentials'
+      ? 'Incorrect email or password. Please try again.'
+      : error.message);
+    btn.innerHTML = 'Sign In →';
+    btn.disabled = false;
+    return;
+  }
+
+  const profile = await getProfile(data.user.id);
+  const redirect = new URLSearchParams(window.location.search).get('redirect') || '';
+  if (redirect) { window.location.href = redirect; return; }
+  window.location.href = (profile?.role === 'admin') ? 'admin.html' : 'dashboard.html';
+}
+
+// Allow Enter key
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>
