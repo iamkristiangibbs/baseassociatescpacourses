@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Processing | Base Associates CPA</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    body{background:var(--cream);display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+    .callback-card{background:var(--white);border-radius:var(--radius-xl);padding:48px 40px;max-width:500px;width:90%;text-align:center;box-shadow:var(--shadow-lg)}
+    .icon-circle{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 20px}
+    .icon-success{background:var(--green-pale)}
+    .icon-fail{background:#fde8e8}
+    .icon-loading{background:var(--cream)}
+  </style>
+</head>
+<body>
+<div class="callback-card" id="card">
+  <div class="icon-circle icon-loading">⏳</div>
+  <h2 style="margin-bottom:8px;">Verifying Payment…</h2>
+  <p style="color:var(--text-muted);font-size:14px;">Please wait while we confirm your payment with Pesapal.</p>
+  <div class="spinner spinner-green" style="margin:20px auto 0;"></div>
+</div>
+
+<script>
+(async () => {
+  const params   = new URLSearchParams(window.location.search);
+  const trackId  = params.get('OrderTrackingId') || params.get('orderTrackingId');
+  const ref      = params.get('OrderMerchantReference') || params.get('ref');
+  const card     = document.getElementById('card');
+
+  function showFail(msg) {
+    card.innerHTML = `
+      <div class="icon-circle icon-fail">✗</div>
+      <h2 style="margin-bottom:8px;">Payment Not Confirmed</h2>
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;">${msg}</p>
+      <a href="courses.html" class="btn btn-outline-green">← Back to Courses</a>`;
+  }
+
+  function showSuccess(bookingRef) {
+    card.innerHTML = `
+      <div class="icon-circle icon-success">✅</div>
+      <h2 style="margin-bottom:8px;">Booking Confirmed!</h2>
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:8px;">Your payment was successful.</p>
+      <div style="background:var(--cream);border-radius:var(--radius-md);padding:12px 24px;font-size:1rem;font-weight:700;letter-spacing:.1em;margin:16px 0;border:1.5px dashed var(--cream-dark);">${bookingRef}</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:24px;">A confirmation email has been sent to you.</p>
+      <a href="dashboard.html" class="btn btn-primary">Go to My Dashboard →</a>`;
+  }
+
+  if (!trackId || !ref) {
+    showFail('Missing payment reference. Please contact support.');
+    return;
+  }
+
+  try {
+    // Call Edge Function to verify payment
+    const SUPABASE_URL = 'https://lmcvpatdjddoiyyoyulh.supabase.co';
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/pesapal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+      body: JSON.stringify({ action: 'verify', orderTrackingId: trackId }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok || result.error) {
+      showFail('Could not verify payment. Please contact support with reference: ' + ref);
+      return;
+    }
+
+    const status = result.payment_status_description || result.status_code;
+    const isPaid = status === 'Completed' || status === '1';
+
+    if (!isPaid) {
+      showFail('Payment was not completed. Status: ' + status + '. Reference: ' + ref);
+      return;
+    }
+
+    // Payment confirmed — update booking in Supabase
+    const { error } = await getSB()
+      .from('bookings')
+      .update({ status: 'confirmed', payment_status: 'paid' })
+      .eq('booking_ref', ref);
+
+    if (error) {
+      showFail('Payment received but booking update failed. Please contact support with ref: ' + ref);
+      return;
+    }
+
+    showSuccess(ref);
+
+  } catch (e) {
+    showFail('Verification error: ' + e.message + '. Reference: ' + ref);
+  }
+})();
+</script>
+</body>
+</html>

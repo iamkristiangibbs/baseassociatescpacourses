@@ -576,7 +576,7 @@ async function doPayment() {
   try {
     const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/pesapal`, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
       body: JSON.stringify({
         action:      'submit',
         amount:      COURSE_FEE,
@@ -592,9 +592,10 @@ async function doPayment() {
     });
 
     const data = await res.json();
+    console.log('Pesapal response:', JSON.stringify(data));
 
     if (!res.ok || data.error || !data.redirect_url) {
-      throw new Error(data.error || 'No redirect URL returned from Pesapal');
+      throw new Error(JSON.stringify(data));
     }
 
     // Redirect to Pesapal payment page
