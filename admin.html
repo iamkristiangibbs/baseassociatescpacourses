@@ -390,7 +390,6 @@ function renderStudentsTable(data) {
           <td>
             <div class="tbl-actions">
               <button class="btn btn-outline-green btn-sm" onclick="openStudentModal('${s.id}','${(s.full_name||'').replace(/'/g,'')}')">View</button>
-              <button class="btn btn-primary btn-sm" onclick="promoteAdmin('${s.id}','${(s.full_name||'').replace(/'/g,'')}')" title="Make Admin">Make Admin</button>
             </div>
           </td>
         </tr>`).join('')}
@@ -715,13 +714,6 @@ async function revokeCert(id) {
   if (!confirm('Revoke this certificate?')) return;
   await getSB().from('bookings').update({ status:'confirmed' }).eq('id', id);
   await loadAllBookings();
-}
-async function promoteAdmin(id, name) {
-  if (!confirm('Make ' + name + ' an admin? They will be able to access the admin panel.')) return;
-  const { error } = await getSB().from('profiles').update({ role:'admin' }).eq('id', id);
-  if (error) { alert('Failed: ' + error.message); return; }
-  alert('✓ ' + name + ' is now an admin. They will see the admin panel on next login.');
-  await loadAllStudents();
 }
 
 function exportCSV() {

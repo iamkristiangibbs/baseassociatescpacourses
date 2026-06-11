@@ -602,7 +602,7 @@ async function doPayment() {
     window.location.href = data.redirect_url;
 
   } catch (e) {
-    document.getElementById('pay-err-txt').textContent = 'Payment setup failed: ' + e.message;
+    document.getElementById('pay-err-txt').textContent = 'Payment setup failed. Please try again or contact support.';
     document.getElementById('pay-err').style.display = 'flex';
     btn.innerHTML = 'Pay UGX 100,000 via Pesapal →'; btn.disabled = false;
   }
