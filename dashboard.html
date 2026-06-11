@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Dashboard | Base Associates CPA</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    body{background:var(--cream)}
+    .dash-wrap{max-width:1100px;margin:0 auto;padding:48px 2rem 72px}
+    .dash-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:36px;flex-wrap:wrap;gap:16px}
+    .dash-top h1{font-size:1.9rem;margin-bottom:4px}
+    .dash-top p{font-size:14px;color:var(--text-muted)}
+    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+    .stat-card{background:var(--white);border-radius:var(--radius-lg);padding:22px 24px;box-shadow:var(--shadow-sm);border:1.5px solid var(--cream-dark)}
+    .stat-card .num{font-family:var(--font-display);font-size:2rem;font-weight:700;color:var(--text-dark)}
+    .stat-card .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-top:4px}
+    .stat-card .sub{font-size:12px;color:var(--green);margin-top:2px}
+    .note-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--cream-dark)}
+    .note-item:last-child{border-bottom:none}
+    .note-icon{width:36px;height:36px;background:var(--danger-pale);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .note-name{font-size:13px;font-weight:600;color:var(--text-dark)}
+    .note-course{font-size:11px;color:var(--text-muted);margin-top:2px}
+    .invoice-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--cream-dark)}
+    .invoice-row:last-child{border-bottom:none}
+    .invoice-main{font-size:13px;font-weight:600;color:var(--text-dark)}
+    .invoice-date{font-size:11px;color:var(--text-muted);margin-top:2px}
+    @media(max-width:768px){.stat-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:480px){.stat-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+<nav class="site-nav has-mobile-nav">
+  <a href="index.html" class="nav-brand">
+    <img src="logo.png" alt="Base Associates CPA" style="height:52px;width:auto;display:block;">
+    <div class="nav-brand-text"><span class="name">base associates</span><span class="sub">Certified Public Accountants</span></div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html"     class="nav-link">Home</a>
+    <a href="courses.html"   class="nav-link">Courses</a>
+    <a href="dashboard.html" class="nav-link active">Dashboard</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user" id="nav-user"></div>
+    <button class="nav-link" onclick="doLogout()">Logout</button>
+  </div>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-mobile-menu" id="nav-mobile-menu">
+  <a href="index.html"     class="mob-nav-link">Home</a>
+  <a href="courses.html"   class="mob-nav-link">Courses</a>
+  <a href="dashboard.html" class="mob-nav-link active">Dashboard</a>
+  <hr class="mob-divider">
+  <button class="mob-nav-link" onclick="doLogout()">Logout</button>
+</div>
+
+<div class="dash-wrap">
+
+  <div class="dash-top">
+    <div>
+      <span class="tag">My Learning Space</span>
+      <h1 id="welcome-heading">Dashboard</h1>
+      <p id="welcome-sub">Loading your details…</p>
+    </div>
+    <a href="courses.html" class="btn btn-primary">Browse More Courses →</a>
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="num" id="stat-upcoming">—</div>
+      <div class="lbl">Upcoming</div>
+      <div class="sub" id="stat-upcoming-sub">Confirmed bookings</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="stat-completed">—</div>
+      <div class="lbl">Completed</div>
+      <div class="sub">Courses finished</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="stat-certs">—</div>
+      <div class="lbl">Certificates</div>
+      <div class="sub">Ready to download</div>
+    </div>
+  </div>
+
+  <!-- MY BOOKINGS -->
+  <div class="panel">
+    <h3>My Bookings <span id="booking-count"></span></h3>
+    <div id="bookings-area" style="text-align:center;padding:40px;color:var(--text-muted);">
+      <div class="spinner spinner-green" style="margin:0 auto 12px;"></div>
+      Loading your bookings…
+    </div>
+  </div>
+
+  <!-- COURSE NOTES -->
+  <div class="panel">
+    <h3>Course Notes &amp; Materials <span id="notes-count"></span></h3>
+    <div id="notes-area" style="text-align:center;padding:40px;color:var(--text-muted);">
+      <div class="spinner spinner-green" style="margin:0 auto 12px;"></div>
+      Loading notes…
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="panel">
+    <h3>My Profile <span><a href="#" class="auth-link" onclick="toggleEditProfile()" id="edit-link">Edit</a></span></h3>
+    <div id="profile-view"></div>
+    <div id="profile-edit" style="display:none;">
+      <div class="form-row">
+        <div class="form-group"><label>Full Name</label><input id="p-name" type="text"/></div>
+        <div class="form-group"><label>Phone</label><input id="p-phone" type="tel"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Job Title</label><input id="p-job" type="text"/></div>
+        <div class="form-group"><label>Organisation</label><input id="p-org" type="text"/></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+        <button class="btn btn-outline-green" onclick="toggleEditProfile()">Cancel</button>
+      </div>
+      <div class="alert alert-success" id="profile-saved" style="display:none;margin-top:12px;">✓ Profile updated successfully.</div>
+    </div>
+  </div>
+
+  <!-- INVOICES -->
+  <div class="panel">
+    <h3>Invoice History</h3>
+    <div id="invoices-area">
+      <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">Loading…</div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="name">base associates <span>CPA</span></div><p>Professional training for Uganda's finance and accounting community.</p></div>
+      <div class="footer-col"><h4>Courses</h4><a href="courses.html">All Courses</a></div>
+      <div class="footer-col"><h4>Platform</h4><a href="dashboard.html">Dashboard</a><a href="#" onclick="doLogout()">Logout</a></div>
+      <div class="footer-col"><h4>Support</h4><a href="#">Contact</a><a href="#">FAQs</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 Base Associates CPA.</span><span>ICPAU Accredited · Kampala, Uganda</span></div>
+  </div>
+</footer>
+
+<script>
+let userProfile = null;
+
+(async () => {
+  const user = await requireAuth();
+  if (!user) return;
+  userProfile = await getProfile(user.id);
+
+  const initials = (userProfile?.full_name || user.email)[0].toUpperCase();
+  document.getElementById('nav-user').innerHTML =
+    `<div class="nav-avatar">${initials}</div>&nbsp;<span style="font-size:13px;font-weight:600;color:var(--green);">${userProfile?.full_name||user.email}</span>`;
+
+  const name = (userProfile?.full_name||'').split(' ')[0] || 'Learner';
+  document.getElementById('welcome-heading').textContent = 'Welcome back, ' + name;
+  document.getElementById('welcome-sub').textContent = user.email;
+
+  renderProfileView();
+  await Promise.all([loadBookings(user.id), loadNotes(user.id)]);
+})();
+
+function renderProfileView() {
+  const p = userProfile || {};
+  document.getElementById('profile-view').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:14px;">
+      <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px;">Full Name</div><div style="color:var(--text-dark);font-weight:600;">${p.full_name||'—'}</div></div>
+      <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px;">Phone</div><div style="color:var(--text-dark);font-weight:600;">${p.phone||'—'}</div></div>
+      <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px;">Job Title</div><div style="color:var(--text-dark);">${p.job_title||'—'}</div></div>
+      <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px;">Organisation</div><div style="color:var(--text-dark);">${p.organisation||'—'}</div></div>
+    </div>`;
+}
+
+function toggleEditProfile() {
+  const p = userProfile || {};
+  document.getElementById('p-name').value  = p.full_name||'';
+  document.getElementById('p-phone').value = p.phone||'';
+  document.getElementById('p-job').value   = p.job_title||'';
+  document.getElementById('p-org').value   = p.organisation||'';
+  const editing = document.getElementById('profile-edit').style.display !== 'none';
+  document.getElementById('profile-view').style.display = editing ? '' : 'none';
+  document.getElementById('profile-edit').style.display = editing ? 'none' : '';
+  document.getElementById('edit-link').textContent = editing ? 'Edit' : 'Cancel';
+  document.getElementById('profile-saved').style.display = 'none';
+}
+
+async function saveProfile() {
+  const updates = {
+    full_name:    document.getElementById('p-name').value.trim(),
+    phone:        document.getElementById('p-phone').value.trim(),
+    job_title:    document.getElementById('p-job').value.trim(),
+    organisation: document.getElementById('p-org').value.trim(),
+  };
+  const user = await getUser();
+  await getSB().from('profiles').update(updates).eq('id', user.id);
+  Object.assign(userProfile, updates);
+  renderProfileView();
+  document.getElementById('profile-view').style.display = '';
+  document.getElementById('profile-edit').style.display = 'none';
+  document.getElementById('edit-link').textContent = 'Edit';
+  document.getElementById('profile-saved').style.display = 'flex';
+}
+
+async function loadBookings(userId) {
+  const { data: bookings, error } = await getSB()
+    .from('bookings')
+    .select('*')
+    .eq('user_id', userId)
+    .order('booked_at', { ascending: false });
+
+  const area = document.getElementById('bookings-area');
+  if (error || !bookings) { area.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Could not load bookings.</p></div>`; return; }
+
+  const confirmed = bookings.filter(b => b.status === 'confirmed');
+  const completed = bookings.filter(b => b.status === 'completed');
+
+  document.getElementById('stat-upcoming').textContent  = confirmed.length;
+  document.getElementById('stat-completed').textContent = completed.length;
+  document.getElementById('stat-certs').textContent     = completed.length;
+  document.getElementById('booking-count').textContent  = bookings.length + ' total';
+
+  if (!bookings.length) {
+    area.innerHTML = `<div class="empty-state"><div class="icon">📚</div><p>You haven't booked any courses yet.</p><a href="courses.html" class="btn btn-primary" style="margin-top:12px;">Browse All Courses →</a></div>`;
+    document.getElementById('invoices-area').innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">No invoices yet.</div>`;
+    return;
+  }
+
+  // Fetch meeting links for confirmed bookings and certificates for completed ones
+  const activeCourseIds = [...new Set(confirmed.map(b => b.course_id))];
+  let linksMap = {};
+  if (activeCourseIds.length) {
+    const { data: links } = await getSB()
+      .from('session_links')
+      .select('*')
+      .in('course_id', activeCourseIds);
+    if (links) {
+      links.forEach(l => { linksMap[l.course_id + '_' + l.slot_id] = l; });
+    }
+  }
+
+  const allBookingIds = bookings.map(b => b.id);
+  let certsMap = {};
+  if (allBookingIds.length) {
+    const { data: certs } = await getSB()
+      .from('certificates')
+      .select('booking_id, file_url, file_name')
+      .in('booking_id', allBookingIds);
+    if (certs) certs.forEach(c => { certsMap[c.booking_id] = c; });
+  }
+
+  const sP = s => ({
+    confirmed: '<span class="pill pill-confirmed">Confirmed</span>',
+    pending:   '<span class="pill pill-pending">Pending</span>',
+    completed: '<span class="pill pill-completed">Completed</span>',
+    cancelled: '<span class="pill pill-waitlist">Cancelled</span>',
+  }[s] || `<span class="pill pill-pending">${s}</span>`);
+
+  area.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Booking Ref</th><th>Course</th><th>Session</th><th>Payment</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          ${bookings.map(b => {
+            const matchedSlot = SESSION_SLOTS.find(s => b.session_slot.includes(s.name));
+            const classLink   = matchedSlot ? linksMap[b.course_id + '_' + matchedSlot.id] : null;
+            const joinBtn = classLink
+              ? `<a href="${classLink.link_url}" target="_blank" rel="noopener noreferrer"
+                   class="btn btn-primary btn-sm"
+                   style="background:${classLink.link_type==='meet'?'#1a73e8':'#2D8CFF'};border-color:${classLink.link_type==='meet'?'#1a73e8':'#2D8CFF'};">
+                   ${classLink.link_type === 'meet' ? '🟢 Join Meet' : '🎥 Join Zoom'}
+                 </a>`
+              : '<span style="font-size:12px;color:var(--text-muted);">Upcoming</span>';
+
+            return `
+            <tr>
+              <td style="font-family:monospace;font-size:12px;">${b.booking_ref}</td>
+              <td style="font-size:13px;">${b.course_title.substring(0,45)}…</td>
+              <td style="font-size:12px;">${b.session_slot}</td>
+              <td>
+                <div style="font-size:12px;">${b.payment_method==='mtn'?'📱 MTN MoMo':b.payment_method==='airtel'?'📱 Airtel':'—'}</div>
+                <div style="font-size:11px;color:var(--green);font-weight:600;">UGX ${(b.amount_ugx||0).toLocaleString()} ${b.payment_status==='paid'?'✓':''}</div>
+              </td>
+              <td>${sP(b.status)}</td>
+              <td>
+                ${b.status === 'completed'
+                  ? certsMap[b.id]
+                    ? `<a href="${certsMap[b.id].file_url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">🎓 Download Certificate</a>`
+                    : '<span style="font-size:12px;color:var(--text-muted);">Certificate pending</span>'
+                  : ''}
+                ${b.status === 'confirmed' ? joinBtn : ''}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // Invoices
+  const paid = bookings.filter(b => b.payment_status === 'paid');
+  document.getElementById('invoices-area').innerHTML = paid.length ? paid.map((b,i) => `
+    <div class="invoice-row">
+      <div>
+        <div class="invoice-main">INV-2026-${String(i+1).padStart(4,'0')} · ${b.course_title.substring(0,40)}…</div>
+        <div class="invoice-date">${new Date(b.booked_at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-weight:700;color:var(--text-dark);">UGX ${(b.amount_ugx||0).toLocaleString()}</span>
+        <button class="btn btn-outline-green btn-sm">⬇ PDF</button>
+      </div>
+    </div>`).join('')
+    : `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">No paid invoices yet.</div>`;
+}
+
+async function loadNotes(userId) {
+  // Load notes for courses the student is enrolled in
+  const { data: bookings } = await getSB()
+    .from('bookings')
+    .select('course_id')
+    .eq('user_id', userId || (await getUser()).id)
+    .eq('status', 'confirmed');
+
+  const el = document.getElementById('notes-area');
+
+  if (!bookings || !bookings.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📄</div><p>No notes yet. Notes will appear here once your instructor uploads materials for your enrolled courses.</p></div>`;
+    document.getElementById('notes-count').textContent = '';
+    return;
+  }
+
+  const courseIds = [...new Set(bookings.map(b => b.course_id))];
+  const { data: notes, error } = await getSB()
+    .from('course_notes')
+    .select('*')
+    .in('course_id', courseIds)
+    .order('uploaded_at', { ascending: false });
+
+  if (error || !notes || !notes.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📄</div><p>No notes uploaded yet for your courses. Check back soon.</p></div>`;
+    document.getElementById('notes-count').textContent = '';
+    return;
+  }
+
+  document.getElementById('notes-count').textContent = notes.length + ' file' + (notes.length!==1?'s':'');
+  el.innerHTML = notes.map(n => `
+    <div class="note-item">
+      <div class="note-icon">📄</div>
+      <div style="flex:1;">
+        <div class="note-name">${n.file_name}</div>
+        <div class="note-course">${n.course_title.substring(0,55)}…</div>
+      </div>
+      <a href="${n.file_url}" target="_blank" class="btn btn-primary btn-sm">⬇ Download</a>
+    </div>`).join('');
+}
+
+async function doLogout() {
+  await getSB().auth.signOut();
+  window.location.href = 'login.html';
+}
+</script>
+</body>
+</html>

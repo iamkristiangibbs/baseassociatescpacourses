@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel | Base Associates CPA</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    body{background:var(--cream)}
+    .admin-body{max-width:1200px;margin:0 auto;padding:40px 2rem 72px}
+    .admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+    .astat{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--radius-lg);padding:20px 24px}
+    .astat .num{font-family:var(--font-display);font-size:2rem;font-weight:700;color:var(--text-dark)}
+    .astat .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-top:4px}
+    .astat .sub{font-size:12px;color:var(--green);margin-top:3px}
+    .apanel{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--radius-lg);padding:28px;margin-bottom:24px}
+    .apanel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+    .apanel-header h3{font-size:1.05rem}
+    .tbl-actions{display:flex;gap:6px}
+    .course-enroll-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--cream-dark)}
+    .course-enroll-row:last-child{border-bottom:none}
+    .enroll-count{display:flex;align-items:center;gap:8px}
+    .enroll-num{font-family:var(--font-display);font-size:1.6rem;font-weight:700;color:var(--green)}
+    .enroll-lbl{font-size:12px;color:var(--text-muted)}
+    /* Upload area */
+    .upload-zone{border:2px dashed var(--cream-dark);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--cream)}
+    .upload-zone:hover,.upload-zone.drag-over{border-color:var(--green);background:var(--green-pale)}
+    .upload-zone input{display:none}
+    .note-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--cream-dark)}
+    .note-row:last-child{border-bottom:none}
+    .note-icon{width:36px;height:36px;background:var(--danger-pale);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .note-name{font-size:13px;font-weight:600;color:var(--text-dark)}
+    .note-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
+    @media(max-width:768px){.admin-stats{grid-template-columns:1fr 1fr}}
+
+    /* Student modal */
+    .s-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:flex-start;justify-content:center;padding:48px 16px;overflow-y:auto}
+    .s-modal-overlay.open{display:flex}
+    .s-modal-box{background:var(--white);border-radius:var(--radius-xl);padding:32px;max-width:620px;width:100%;position:relative;margin:auto}
+    .s-modal-close{position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.7rem;line-height:1;cursor:pointer;color:var(--text-muted);padding:0}
+    .s-modal-close:hover{color:var(--text-dark)}
+    .booking-mini-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--cream-dark)}
+    .booking-mini-row:last-child{border-bottom:none}
+    .cert-drop-zone{border:2px dashed var(--cream-dark);border-radius:var(--radius-lg);padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--cream);margin-top:10px}
+    .cert-drop-zone:hover{border-color:var(--green);background:var(--green-pale)}
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html" class="nav-brand">
+    <img src="logo.png" alt="Base Associates CPA" style="height:52px;width:auto;display:block;">
+    <div class="nav-brand-text"><span class="name">base associates</span><span class="sub">Certified Public Accountants</span></div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html"     class="nav-link">Home</a>
+    <a href="courses.html"   class="nav-link">Courses</a>
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="admin.html"     class="nav-link active">Admin</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user" id="nav-user"></div>
+    <button class="nav-link" onclick="doLogout()">Logout</button>
+  </div>
+</nav>
+
+<div class="admin-topbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;">
+    <h1 style="font-family:var(--font-display);color:var(--white);font-size:1.4rem;display:flex;align-items:center;gap:10px;">⚙️ Admin Panel</h1>
+    <span class="admin-role-badge">Administrator Access Only</span>
+  </div>
+</div>
+
+<div class="admin-tabs">
+  <div class="admin-tabs-inner">
+    <button class="admin-tab active" onclick="switchTab('bookings',this)">📋 All Bookings</button>
+    <button class="admin-tab"        onclick="switchTab('students',this)">👥 Students</button>
+    <button class="admin-tab"        onclick="switchTab('enrollments',this)">📊 Enrollments</button>
+    <button class="admin-tab"        onclick="switchTab('notes',this)">📄 Course Notes</button>
+    <button class="admin-tab"        onclick="switchTab('links',this)">🔗 Class Links</button>
+    <button class="admin-tab"        onclick="switchTab('certs',this)">🎓 Certificates</button>
+  </div>
+</div>
+
+<div class="admin-body">
+
+  <!-- STATS -->
+  <div class="admin-stats">
+    <div class="astat"><div class="num" id="a-accounts">—</div><div class="lbl">Registered Accounts</div><div class="sub">All sign-ups</div></div>
+    <div class="astat"><div class="num" id="a-total">—</div><div class="lbl">Total Bookings</div><div class="sub" id="a-revenue"></div></div>
+    <div class="astat"><div class="num" id="a-completed-stat">—</div><div class="lbl">Total Students</div><div class="sub">Completed a course</div></div>
+  </div>
+
+  <!-- ── TAB: ALL BOOKINGS ── -->
+  <div id="tab-bookings">
+    <div class="apanel">
+      <div class="apanel-header">
+        <h3>All Bookings</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <input type="text" id="search-bookings" placeholder="Search name, course or phone…"
+            style="padding:8px 14px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-md);font-family:var(--font-body);font-size:13px;min-width:220px;"
+            oninput="filterBookingsTable()"/>
+          <select id="filter-status" style="padding:8px 14px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-md);font-family:var(--font-body);font-size:13px;" onchange="filterBookingsTable()">
+            <option value="">All Statuses</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="pending">Pending</option>
+          </select>
+          <button class="btn btn-outline-green btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+      <div id="bookings-table-wrap" style="overflow-x:auto;">
+        <div style="text-align:center;padding:40px;color:var(--text-muted);">
+          <div class="spinner spinner-green" style="margin:0 auto 12px;"></div>Loading…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: STUDENTS ── -->
+  <div id="tab-students" style="display:none;">
+    <div class="apanel">
+      <div class="apanel-header">
+        <h3>All Students</h3>
+        <input type="text" id="search-students" placeholder="Search name, email or phone…"
+          style="padding:8px 14px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-md);font-family:var(--font-body);font-size:13px;min-width:240px;"
+          oninput="filterStudentsTable()"/>
+      </div>
+      <div id="students-table-wrap" style="overflow-x:auto;">
+        <div style="text-align:center;padding:40px;color:var(--text-muted);">
+          <div class="spinner spinner-green" style="margin:0 auto 12px;"></div>Loading…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: ENROLLMENTS PER COURSE ── -->
+  <div id="tab-enrollments" style="display:none;">
+    <div class="apanel">
+      <div class="apanel-header">
+        <h3>Students Enrolled Per Course</h3>
+        <span style="font-size:13px;color:var(--text-muted);">Live count of confirmed bookings</span>
+      </div>
+      <div id="enrollments-content">
+        <div style="text-align:center;padding:40px;color:var(--text-muted);">
+          <div class="spinner spinner-green" style="margin:0 auto 12px;"></div>Loading…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: COURSE NOTES ── -->
+  <div id="tab-notes" style="display:none;">
+    <!-- Upload panel -->
+    <div class="apanel">
+      <div class="apanel-header">
+        <h3>Upload Course Notes</h3>
+      </div>
+      <div class="form-group">
+        <label>Select Course</label>
+        <select id="notes-course-select" style="max-width:480px;">
+          <option value="">— Choose a course —</option>
+        </select>
+      </div>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleDrop(event)">
+        <input type="file" id="file-input" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" onchange="handleFileSelect(event)"/>
+        <div style="font-size:2.5rem;margin-bottom:10px;">📄</div>
+        <p style="font-weight:600;color:var(--text-dark);margin-bottom:4px;">Click to upload or drag &amp; drop</p>
+        <p style="font-size:13px;color:var(--text-muted);">PDF, Word, PowerPoint, Excel — max 20MB</p>
+      </div>
+      <div id="upload-status" style="margin-top:12px;display:none;"></div>
+    </div>
+
+    <!-- Notes library -->
+    <div class="apanel">
+      <div class="apanel-header">
+        <h3>All Uploaded Notes</h3>
+        <select id="filter-notes-course" style="padding:8px 14px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-md);font-family:var(--font-body);font-size:13px;" onchange="loadNotes()">
+          <option value="">All Courses</option>
+        </select>
+      </div>
+      <div id="notes-list">
+        <div style="text-align:center;padding:40px;color:var(--text-muted);">
+          <div class="spinner spinner-green" style="margin:0 auto 12px;"></div>Loading…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: CLASS LINKS ── -->
+  <div id="tab-links" style="display:none;">
+    <div class="apanel">
+      <div class="apanel-header">
+        <h3>Zoom / Google Meet Links</h3>
+        <span style="font-size:13px;color:var(--text-muted);">Students see these on their dashboard to join live classes</span>
+      </div>
+      <div class="form-group" style="max-width:480px;">
+        <label>Select Course</label>
+        <select id="links-course-select" onchange="loadCourseLinks()">
+          <option value="">— Choose a course —</option>
+        </select>
+      </div>
+      <div id="links-slots-area"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB: CERTIFICATES ── -->
+  <div id="tab-certs" style="display:none;">
+    <div class="apanel">
+      <div class="apanel-header">
+        <h3>Certificate Management</h3>
+        <button class="btn btn-primary btn-sm" onclick="exportCSV()">⬇ Export</button>
+      </div>
+      <div id="certs-content" style="overflow-x:auto;">
+        <div style="text-align:center;padding:40px;color:var(--text-muted);">
+          <div class="spinner spinner-green" style="margin:0 auto 12px;"></div>Loading…
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Student detail / cert upload modal ── -->
+<div id="student-modal" class="s-modal-overlay">
+  <div class="s-modal-box">
+    <button class="s-modal-close" onclick="closeStudentModal()">×</button>
+    <div id="student-modal-content">
+      <div style="text-align:center;padding:32px;color:var(--text-muted);">
+        <div class="spinner spinner-green" style="margin:0 auto 12px;"></div>Loading…
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden cert file input -->
+<input type="file" id="cert-file-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="handleCertFile(event)"/>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="name">base associates <span>CPA</span></div><p>Professional training for Uganda's finance and accounting community.</p></div>
+      <div class="footer-col"><h4>Platform</h4><a href="courses.html">Courses</a><a href="dashboard.html">Dashboard</a></div>
+      <div class="footer-col"><h4>Support</h4><a href="#">Contact</a></div>
+      <div class="footer-col"><h4>Company</h4></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 Base Associates CPA.</span><span>ICPAU Accredited · Kampala, Uganda</span></div>
+  </div>
+</footer>
+
+<script>
+let allBookings = [];
+let allStudents = [];
+
+(async () => {
+  const result = await requireAdmin();
+  if (!result) return;
+  const { user, profile } = result;
+
+  document.getElementById('nav-user').innerHTML =
+    `<div class="nav-avatar">${(profile.full_name||'A')[0]}</div>&nbsp;<span style="font-size:13px;font-weight:600;color:var(--green);">${profile.full_name}</span>`;
+
+  populateCourseSelects();
+  await Promise.all([loadAllBookings(), loadAllStudents(), loadNotes()]);
+})();
+
+// ── Populate course dropdowns ─────────────────────────────
+function populateCourseSelects() {
+  const opts = COURSES.map(c => `<option value="${c.id}">${c.id}. ${c.title.substring(0,60)}</option>`).join('');
+  const sel1 = document.getElementById('notes-course-select');
+  const sel2 = document.getElementById('filter-notes-course');
+  const sel3 = document.getElementById('links-course-select');
+  if (sel1) sel1.innerHTML = '<option value="">— Choose a course —</option>' + opts;
+  if (sel2) sel2.innerHTML = '<option value="">All Courses</option>' + opts;
+  if (sel3) sel3.innerHTML = '<option value="">— Choose a course —</option>' + opts;
+}
+
+// ── Load all bookings ─────────────────────────────────────
+async function loadAllBookings() {
+  const { data, error } = await getSB()
+    .from('bookings')
+    .select('*, profiles(full_name, phone, organisation, job_title)')
+    .order('booked_at', { ascending: false });
+  if (error || !data) return;
+  allBookings = data;
+
+  const total     = data.length;
+  const completed = data.filter(b => b.status === 'completed');
+  const revenue   = data.reduce((s, b) => s + (b.amount_ugx || 0), 0);
+
+  document.getElementById('a-total').textContent          = total;
+  document.getElementById('a-revenue').textContent        = 'UGX ' + revenue.toLocaleString() + ' collected';
+  document.getElementById('a-completed-stat').textContent = completed.length;
+
+  renderBookingsTable(data);
+  renderEnrollments(data);
+  renderCerts(data);
+}
+
+// ── Load all students ─────────────────────────────────────
+async function loadAllStudents() {
+  const { data, error } = await getSB()
+    .from('profiles')
+    .select('*')
+    .eq('role', 'learner')
+    .order('created_at', { ascending: false });
+  if (error || !data) return;
+  allStudents = data;
+  document.getElementById('a-accounts').textContent = data.length;
+  renderStudentsTable(data);
+}
+
+// ── Render bookings table ─────────────────────────────────
+function renderBookingsTable(data) {
+  const wrap = document.getElementById('bookings-table-wrap');
+  if (!data.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>No bookings yet.</p></div>`;
+    return;
+  }
+  const sP = s => ({
+    confirmed: '<span class="pill pill-confirmed">Confirmed</span>',
+    pending:   '<span class="pill pill-pending">Pending</span>',
+    cancelled: '<span class="pill pill-waitlist">Cancelled</span>'
+  }[s] || `<span class="pill pill-pending">${s}</span>`);
+
+  wrap.innerHTML = `
+    <table class="data-table" id="bookings-table">
+      <thead><tr><th>Ref</th><th>Student</th><th>Phone</th><th>Course</th><th>Session</th><th>Method</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${data.map(b => `
+        <tr data-ref="${b.booking_ref||''}" data-course="${b.course_title||''}" data-name="${b.profiles?.full_name||''}" data-phone="${b.profiles?.phone||''}" data-status="${b.status||''}">
+          <td style="font-family:monospace;font-size:11px;">${b.booking_ref||'—'}</td>
+          <td>
+            <div style="font-weight:600;color:var(--text-dark);">${b.profiles?.full_name||'Unknown'}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${b.profiles?.organisation||''}</div>
+          </td>
+          <td style="font-size:13px;color:var(--text-dark);font-weight:500;">${b.profiles?.phone||'—'}</td>
+          <td style="max-width:180px;font-size:12px;">${(b.course_title||'').substring(0,45)}…</td>
+          <td style="font-size:12px;">${b.session_slot||'—'}</td>
+          <td style="font-size:12px;">${b.payment_method==='mtn'?'📱 MTN':b.payment_method==='airtel'?'📱 Airtel':'—'}</td>
+          <td style="font-weight:700;color:${b.payment_status==='paid'?'var(--green)':'var(--warning)'};">
+            UGX ${(b.amount_ugx||0).toLocaleString()}${b.payment_status==='paid'?' ✓':''}
+          </td>
+          <td>${sP(b.status)}</td>
+          <td>
+            <div class="tbl-actions">
+              ${b.status==='confirmed' ? `<button class="btn btn-primary btn-sm" onclick="markComplete('${b.id}')">✓ Mark Complete</button>` : ''}
+              ${b.status==='completed' ? `<button class="btn btn-outline-green btn-sm" onclick="issueCert('${b.id}')">🎓 Issue Cert</button>` : ''}
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function filterBookingsTable() {
+  const q  = document.getElementById('search-bookings').value.toLowerCase();
+  const st = document.getElementById('filter-status').value;
+  document.querySelectorAll('#bookings-table tbody tr').forEach(row => {
+    const match = (!q  || [row.dataset.ref,row.dataset.course,row.dataset.name,row.dataset.phone].some(v=>v.toLowerCase().includes(q)))
+               && (!st || row.dataset.status === st);
+    row.style.display = match ? '' : 'none';
+  });
+}
+
+// ── Render students table ─────────────────────────────────
+function renderStudentsTable(data) {
+  const wrap = document.getElementById('students-table-wrap');
+  if (!data.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">👥</div><p>No students registered yet.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <table class="data-table" id="students-table">
+      <thead><tr><th>Name</th><th>Phone</th><th>Email / ID</th><th>Organisation</th><th>Job Title</th><th>Registered</th><th>Action</th></tr></thead>
+      <tbody>
+        ${data.map(s => `
+        <tr data-name="${s.full_name||''}" data-phone="${s.phone||''}">
+          <td>${s.full_name||'—'}</td>
+          <td style="font-weight:600;color:var(--text-dark);">${s.phone||'—'}</td>
+          <td style="font-size:12px;color:var(--text-muted);">${s.id.substring(0,12)}…</td>
+          <td>${s.organisation||'—'}</td>
+          <td>${s.job_title||'—'}</td>
+          <td style="font-size:12px;">${new Date(s.created_at).toLocaleDateString('en-GB')}</td>
+          <td>
+            <div class="tbl-actions">
+              <button class="btn btn-outline-green btn-sm" onclick="openStudentModal('${s.id}','${(s.full_name||'').replace(/'/g,'')}')">View</button>
+              <button class="btn btn-primary btn-sm" onclick="promoteAdmin('${s.id}','${(s.full_name||'').replace(/'/g,'')}')" title="Make Admin">Make Admin</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function filterStudentsTable() {
+  const q = document.getElementById('search-students').value.toLowerCase();
+  document.querySelectorAll('#students-table tbody tr').forEach(row => {
+    const match = !q || [row.dataset.name, row.dataset.phone].some(v => v.toLowerCase().includes(q));
+    row.style.display = match ? '' : 'none';
+  });
+}
+
+// ── Render enrollments per course ─────────────────────────
+function renderEnrollments(bookings) {
+  const el = document.getElementById('enrollments-content');
+  const counts = {};
+  bookings.filter(b => b.status === 'confirmed').forEach(b => {
+    const key = b.course_id + '||' + b.course_title;
+    if (!counts[key]) counts[key] = { id: b.course_id, title: b.course_title, students: [] };
+    counts[key].students.push(b.profiles?.full_name || 'Unknown');
+  });
+
+  const entries = Object.values(counts).sort((a,b) => b.students.length - a.students.length);
+
+  if (!entries.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📊</div><p>No confirmed enrolments yet.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = entries.map(c => `
+    <div class="course-enroll-row">
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:14px;color:var(--text-dark);">${c.title}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">
+          ${c.students.slice(0,5).join(' · ')}${c.students.length>5?' + '+(c.students.length-5)+' more':''}
+        </div>
+      </div>
+      <div class="enroll-count">
+        <div>
+          <div class="enroll-num">${c.students.length}</div>
+          <div class="enroll-lbl">student${c.students.length!==1?'s':''}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Notes: upload ─────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) uploadNote(file);
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) uploadNote(file);
+}
+
+async function uploadNote(file) {
+  const courseId = document.getElementById('notes-course-select').value;
+  if (!courseId) { alert('Please select a course before uploading.'); return; }
+
+  const course = COURSES.find(c => c.id == courseId);
+  const status = document.getElementById('upload-status');
+  status.style.display = 'flex';
+  status.className = 'alert alert-info show';
+  status.innerHTML = '<div class="spinner spinner-green"></div> Uploading ' + file.name + '…';
+
+  const safeName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `course-${courseId}/${safeName}`;
+
+  const { data: upData, error: upErr } = await getSB().storage
+    .from('course-notes')
+    .upload(path, file, { cacheControl: '3600', upsert: false });
+
+  if (upErr) {
+    status.className = 'alert alert-danger show';
+    status.textContent = '✗ Upload failed: ' + upErr.message;
+    return;
+  }
+
+  const { data: urlData } = getSB().storage.from('course-notes').getPublicUrl(path);
+
+  const user = await getUser();
+  await getSB().from('course_notes').insert({
+    course_id:    parseInt(courseId),
+    course_title: course.title,
+    file_name:    file.name,
+    file_url:     urlData.publicUrl,
+    uploaded_by:  user.id,
+  });
+
+  status.className = 'alert alert-success show';
+  status.textContent = '✓ ' + file.name + ' uploaded successfully.';
+  document.getElementById('file-input').value = '';
+  setTimeout(() => { status.style.display='none'; }, 3000);
+  loadNotes();
+}
+
+// ── Notes: load & display ─────────────────────────────────
+async function loadNotes() {
+  const filterCourse = document.getElementById('filter-notes-course')?.value || '';
+  let query = getSB().from('course_notes').select('*').order('uploaded_at', { ascending: false });
+  if (filterCourse) query = query.eq('course_id', parseInt(filterCourse));
+
+  const { data, error } = await query;
+  const el = document.getElementById('notes-list');
+  if (!el) return;
+
+  if (error || !data || !data.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📄</div><p>No notes uploaded yet. Use the form above to add files.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = data.map(n => `
+    <div class="note-row">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;">
+        <div class="note-icon">📄</div>
+        <div>
+          <div class="note-name">${n.file_name}</div>
+          <div class="note-meta">${n.course_title.substring(0,50)}… · Uploaded ${new Date(n.uploaded_at).toLocaleDateString('en-GB')}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <a href="${n.file_url}" target="_blank" class="btn btn-outline-green btn-sm">⬇ Download</a>
+        <button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}','${n.file_url}')">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+async function deleteNote(id, fileUrl) {
+  if (!confirm('Delete this file?')) return;
+  await getSB().from('course_notes').delete().eq('id', id);
+  // Extract path from URL and remove from storage
+  const path = fileUrl.split('/course-notes/')[1];
+  if (path) await getSB().storage.from('course-notes').remove([decodeURIComponent(path)]);
+  loadNotes();
+}
+
+// ── Certs ─────────────────────────────────────────────────
+function renderCerts(data) {
+  const el = document.getElementById('certs-content');
+  if (!el) return;
+  const completed = data.filter(b => b.status === 'completed');
+  if (!completed.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">🎓</div><p>No certificates issued yet.</p></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <table class="data-table">
+      <thead><tr><th>Student</th><th>Phone</th><th>Course</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${completed.map(b => `
+        <tr>
+          <td>${b.profiles?.full_name||'Unknown'}</td>
+          <td>${b.profiles?.phone||'—'}</td>
+          <td style="font-size:12px;">${(b.course_title||'').substring(0,45)}…</td>
+          <td style="font-size:12px;">${new Date(b.booked_at).toLocaleDateString('en-GB')}</td>
+          <td><div class="tbl-actions">
+            <button class="btn btn-danger btn-sm" onclick="revokeCert('${b.id}')">Revoke</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ── Admin actions ─────────────────────────────────────────
+async function markComplete(id) {
+  if (!confirm('Confirm this student has completed the course?')) return;
+  await getSB().from('bookings').update({ status:'completed' }).eq('id', id);
+  await loadAllBookings();
+}
+
+async function issueCert(bookingId) {
+  // Find the booking in allBookings and open the student modal to the cert upload
+  const b = allBookings.find(x => x.id === bookingId);
+  if (!b) return;
+  await openStudentModal(b.user_id, b.profiles?.full_name || 'Student');
+}
+
+// ── Student modal ─────────────────────────────────────────
+let certTarget = null; // { bookingId, userId, courseId, courseTitle, studentName }
+
+async function openStudentModal(userId, name) {
+  document.getElementById('student-modal').classList.add('open');
+  document.getElementById('student-modal-content').innerHTML = `
+    <div style="text-align:center;padding:32px;color:var(--text-muted);">
+      <div class="spinner spinner-green" style="margin:0 auto 12px;"></div>Loading ${name}'s details…
+    </div>`;
+
+  // Fetch their bookings + existing certs in parallel
+  const [{ data: bookings }, { data: certs }] = await Promise.all([
+    getSB().from('bookings').select('*').eq('user_id', userId).order('booked_at', { ascending: false }),
+    getSB().from('certificates').select('*').eq('user_id', userId),
+  ]);
+
+  const certsByBooking = {};
+  if (certs) certs.forEach(c => { certsByBooking[c.booking_id] = c; });
+
+  const profile = allStudents.find(s => s.id === userId) || {};
+
+  const statusPill = s => ({
+    confirmed: '<span class="pill pill-confirmed" style="font-size:11px;">Confirmed</span>',
+    completed: '<span class="pill pill-completed" style="font-size:11px;">Completed</span>',
+    cancelled: '<span class="pill pill-waitlist" style="font-size:11px;">Cancelled</span>',
+    pending:   '<span class="pill pill-pending"   style="font-size:11px;">Pending</span>',
+  }[s] || `<span class="pill pill-pending" style="font-size:11px;">${s}</span>`);
+
+  document.getElementById('student-modal-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--green-pale);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:var(--green);flex-shrink:0;">
+        ${(name||'?')[0].toUpperCase()}
+      </div>
+      <div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-dark);">${name}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${profile.phone||''} ${profile.organisation ? '· ' + profile.organisation : ''}</div>
+      </div>
+    </div>
+
+    <h4 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:12px;">Bookings</h4>
+
+    ${!bookings || !bookings.length
+      ? `<p style="color:var(--text-muted);font-size:13px;">No bookings yet.</p>`
+      : bookings.map(b => {
+          const cert = certsByBooking[b.id];
+          const canUpload = b.status === 'completed';
+          return `
+          <div class="booking-mini-row">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;color:var(--text-dark);margin-bottom:3px;">${b.course_title.substring(0,55)}${b.course_title.length>55?'…':''}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${b.session_slot} · <span style="font-family:monospace;">${b.booking_ref}</span></div>
+              ${cert ? `<div style="margin-top:6px;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:var(--green);font-weight:600;">🎓 Certificate uploaded</span>
+                <a href="${cert.file_url}" target="_blank" class="btn btn-outline-green btn-sm" style="font-size:11px;padding:2px 8px;">⬇ View</a>
+              </div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+              ${statusPill(b.status)}
+              ${canUpload ? `<button class="btn btn-primary btn-sm" style="font-size:12px;"
+                onclick="triggerCertUpload('${b.id}','${userId}',${b.course_id},'${b.course_title.replace(/'/g,'')}','${name.replace(/'/g,'')}')">
+                ${cert ? '↺ Replace Cert' : '⬆ Upload Cert'}
+              </button>` : ''}
+            </div>
+          </div>`;
+        }).join('')
+    }`;
+}
+
+function closeStudentModal() {
+  document.getElementById('student-modal').classList.remove('open');
+  certTarget = null;
+}
+
+function triggerCertUpload(bookingId, userId, courseId, courseTitle, studentName) {
+  certTarget = { bookingId, userId, courseId, courseTitle, studentName };
+  document.getElementById('cert-file-input').value = '';
+  document.getElementById('cert-file-input').click();
+}
+
+async function handleCertFile(e) {
+  const file = e.target.files[0];
+  if (!file || !certTarget) return;
+
+  const { bookingId, userId, courseId, courseTitle, studentName } = certTarget;
+
+  // Show uploading state in modal
+  const rows = document.querySelectorAll('.booking-mini-row');
+  // Find the row with matching booking upload button and show progress
+  const statusEl = document.createElement('div');
+  statusEl.id = 'cert-upload-msg';
+  statusEl.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--text-dark);color:#fff;padding:12px 20px;border-radius:var(--radius-md);font-size:13px;z-index:1100;';
+  statusEl.textContent = '⏳ Uploading certificate…';
+  document.body.appendChild(statusEl);
+
+  const safeName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path     = `${userId}/${bookingId}_${safeName}`;
+
+  const { error: upErr } = await getSB().storage
+    .from('certificates')
+    .upload(path, file, { cacheControl: '3600', upsert: true });
+
+  if (upErr) {
+    statusEl.style.background = 'var(--danger)';
+    statusEl.textContent = '✗ Upload failed: ' + upErr.message;
+    setTimeout(() => statusEl.remove(), 4000);
+    return;
+  }
+
+  const { data: urlData } = getSB().storage.from('certificates').getPublicUrl(path);
+
+  // Upsert certificate record (replace if one already exists for this booking)
+  const { error: dbErr } = await getSB().from('certificates').upsert({
+    user_id:      userId,
+    booking_id:   bookingId,
+    course_id:    courseId,
+    course_title: courseTitle,
+    file_name:    file.name,
+    file_url:     urlData.publicUrl,
+    issued_at:    new Date().toISOString(),
+  }, { onConflict: 'booking_id' });
+
+  if (dbErr) {
+    statusEl.style.background = 'var(--danger)';
+    statusEl.textContent = '✗ DB error: ' + dbErr.message;
+    setTimeout(() => statusEl.remove(), 4000);
+    return;
+  }
+
+  statusEl.style.background = '#1b7a4a';
+  statusEl.textContent = '✓ Certificate uploaded for ' + studentName;
+  setTimeout(() => statusEl.remove(), 3000);
+
+  // Refresh modal to show cert link
+  const name = studentName;
+  openStudentModal(userId, name);
+}
+async function revokeCert(id) {
+  if (!confirm('Revoke this certificate?')) return;
+  await getSB().from('bookings').update({ status:'confirmed' }).eq('id', id);
+  await loadAllBookings();
+}
+async function promoteAdmin(id, name) {
+  if (!confirm('Make ' + name + ' an admin? They will be able to access the admin panel.')) return;
+  const { error } = await getSB().from('profiles').update({ role:'admin' }).eq('id', id);
+  if (error) { alert('Failed: ' + error.message); return; }
+  alert('✓ ' + name + ' is now an admin. They will see the admin panel on next login.');
+  await loadAllStudents();
+}
+
+function exportCSV() {
+  const rows = [['Ref','Student','Phone','Organisation','Course','Session','Method','Amount','Status','Date']];
+  allBookings.forEach(b => {
+    rows.push([
+      b.booking_ref||'', b.profiles?.full_name||'', b.profiles?.phone||'', b.profiles?.organisation||'',
+      b.course_title||'', b.session_slot||'', b.payment_method||'',
+      b.amount_ugx||'', b.status||'', new Date(b.booked_at).toLocaleDateString('en-GB')
+    ]);
+  });
+  const csv = rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'bookings-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ── Class Links ───────────────────────────────────────────
+let courseLinksCache = {};
+
+async function loadCourseLinks() {
+  const courseId = document.getElementById('links-course-select').value;
+  const area     = document.getElementById('links-slots-area');
+  if (!courseId) { area.innerHTML = ''; return; }
+
+  area.innerHTML = '<div style="padding:20px;color:var(--text-muted);font-size:13px;"><div class="spinner spinner-green" style="margin:0 auto 8px;"></div>Loading…</div>';
+
+  const { data } = await getSB()
+    .from('session_links')
+    .select('*')
+    .eq('course_id', parseInt(courseId));
+
+  courseLinksCache = {};
+  if (data) data.forEach(l => { courseLinksCache[l.slot_id] = l; });
+
+  area.innerHTML = `
+    <div style="overflow-x:auto;margin-top:8px;">
+      <table class="data-table">
+        <thead><tr><th>Time Slot</th><th>Platform</th><th>Meeting Link</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${SESSION_SLOTS.map(s => {
+            const ex = courseLinksCache[s.id];
+            return `
+            <tr id="link-row-${s.id}">
+              <td style="white-space:nowrap;">
+                <div style="font-weight:600;color:var(--text-dark);">${s.name}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${s.time}</div>
+              </td>
+              <td>
+                <select id="lt-${s.id}" style="padding:6px 10px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-md);font-size:13px;font-family:var(--font-body);">
+                  <option value="zoom" ${!ex || ex.link_type === 'zoom' ? 'selected' : ''}>Zoom</option>
+                  <option value="meet" ${ex?.link_type === 'meet' ? 'selected' : ''}>Google Meet</option>
+                </select>
+              </td>
+              <td>
+                <input id="lu-${s.id}" type="url" value="${ex?.link_url || ''}"
+                  placeholder="https://zoom.us/j/… or https://meet.google.com/…"
+                  style="width:100%;min-width:280px;padding:8px 12px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-md);font-size:13px;font-family:var(--font-body);"/>
+              </td>
+              <td style="white-space:nowrap;">
+                <div class="tbl-actions">
+                  <button class="btn btn-primary btn-sm" onclick="saveLink('${s.id}', ${courseId})">Save</button>
+                  ${ex ? `<button class="btn btn-danger btn-sm" onclick="removeLink('${ex.id}','${s.id}')">Remove</button>` : ''}
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function saveLink(slotId, courseId) {
+  const url  = document.getElementById('lu-' + slotId).value.trim();
+  const type = document.getElementById('lt-' + slotId).value;
+  if (!url) { alert('Please enter a meeting link URL.'); return; }
+  if (!url.startsWith('http')) { alert('Please enter a valid URL starting with https://'); return; }
+
+  const { error } = await getSB().from('session_links').upsert({
+    course_id:  parseInt(courseId),
+    slot_id:    slotId,
+    link_url:   url,
+    link_type:  type,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'course_id,slot_id' });
+
+  if (error) { alert('Failed to save: ' + error.message); return; }
+  loadCourseLinks();
+}
+
+async function removeLink(id, slotId) {
+  if (!confirm('Remove this meeting link?')) return;
+  await getSB().from('session_links').delete().eq('id', id);
+  loadCourseLinks();
+}
+
+function switchTab(id, btn) {
+  ['bookings','students','enrollments','notes','links','certs'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = 'none';
+  });
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).style.display = '';
+  btn.classList.add('active');
+}
+
+async function doLogout() {
+  await getSB().auth.signOut();
+  window.location.href = 'login.html';
+}
+</script>
+</body>
+</html>

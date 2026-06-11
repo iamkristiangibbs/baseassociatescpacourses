@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account | Base Associates CPA</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html" class="nav-brand">
+    <img src="logo.png" alt="Base Associates CPA" style="height:52px;width:auto;display:block;">
+    <div class="nav-brand-text">
+      <span class="name">base associates</span>
+      <span class="sub">Certified Public Accountants</span>
+    </div>
+  </a>
+  <div class="nav-right">
+    <a href="login.html" class="nav-link">Login</a>
+    <a href="courses.html" class="nav-cta">Browse Courses</a>
+  </div>
+</nav>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 68px);">
+
+  <!-- LEFT — brand panel -->
+  <div style="background:var(--gradient-hero);padding:64px 56px;display:flex;flex-direction:column;justify-content:center;">
+    <div style="max-width:420px;">
+      <span class="tag tag-white" style="margin-bottom:20px;">Join Base Associates ProLearn</span>
+      <h2 style="font-size:clamp(1.8rem,2.5vw,2.4rem);color:var(--white);margin-bottom:16px;line-height:1.15;">Start Your Professional Development Journey</h2>
+      <p style="color:rgba(255,255,255,.75);font-size:.95rem;line-height:1.75;margin-bottom:36px;">Create your free account to book courses, track CPD hours and download your ICPAU-recognised certificates.</p>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📚</div>
+          <div><div style="font-weight:700;font-size:14px;color:var(--white);">Access All 20 Courses</div><div style="font-size:12px;color:rgba(255,255,255,.6);">Accounting, tax, finance &amp; more</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📊</div>
+          <div><div style="font-weight:700;font-size:14px;color:var(--white);">Track Your CPD Progress</div><div style="font-size:12px;color:rgba(255,255,255,.6);">Towards your 40-hour ICPAU target</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🎓</div>
+          <div><div style="font-weight:700;font-size:14px;color:var(--white);">Download Certificates Instantly</div><div style="font-size:12px;color:rgba(255,255,255,.6);">ICPAU-recognised CPD certificates</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">⏰</div>
+          <div><div style="font-weight:700;font-size:14px;color:var(--white);">5 Flexible Session Times</div><div style="font-size:12px;color:rgba(255,255,255,.6);">Morning through midnight — your choice</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT — form -->
+  <div style="background:var(--cream);padding:48px 56px;display:flex;align-items:center;justify-content:center;overflow-y:auto;" id="right-panel">
+    <div style="width:100%;max-width:420px;">
+      <div style="margin-bottom:24px;">
+        <span class="tag">Create Account</span>
+        <h2 style="font-size:1.6rem;margin-bottom:6px;">Register for Free</h2>
+        <p style="font-size:14px;color:var(--text-muted);">Takes less than 2 minutes.</p>
+      </div>
+
+      <div style="background:var(--white);border-radius:var(--radius-xl);padding:36px;box-shadow:var(--shadow-lg);">
+        <div class="alert alert-danger" id="err-msg">⚠ <span id="err-text"></span></div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name *</label>
+            <input type="text" id="first-name" placeholder="James" autocomplete="given-name"/>
+            <div class="field-error" id="e-first">Required</div>
+          </div>
+          <div class="form-group">
+            <label>Last Name *</label>
+            <input type="text" id="last-name" placeholder="Mukasa" autocomplete="family-name"/>
+            <div class="field-error" id="e-last">Required</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address *</label>
+          <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email"/>
+          <div class="field-error" id="e-email">Enter a valid email address.</div>
+        </div>
+
+        <div class="form-group">
+          <label>Phone Number *</label>
+          <input type="tel" id="reg-phone" placeholder="+256 700 000000" autocomplete="tel"/>
+          <div class="field-error" id="e-phone">Enter your phone number.</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Job Title</label>
+            <input type="text" id="job-title" placeholder="e.g. Accountant"/>
+          </div>
+          <div class="form-group">
+            <label>Organisation</label>
+            <input type="text" id="org-name" placeholder="Company name"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password *</label>
+          <input type="password" id="reg-password" placeholder="Minimum 8 characters" autocomplete="new-password"/>
+          <div class="field-error" id="e-password">Password must be at least 8 characters.</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Confirm Password *</label>
+          <input type="password" id="reg-password2" placeholder="Repeat password" autocomplete="new-password"/>
+          <div class="field-error" id="e-password2">Passwords do not match.</div>
+        </div>
+
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text-muted);margin-bottom:20px;cursor:pointer;">
+          <input type="checkbox" id="agree-terms" style="width:auto;accent-color:var(--green);margin-top:2px;"/>
+          I agree to the <a href="#" class="auth-link" style="margin:0 3px;">Terms of Use</a> and <a href="#" class="auth-link" style="margin:0 3px;">Privacy Policy</a>
+        </label>
+        <div class="field-error" id="e-terms" style="margin-top:-14px;margin-bottom:14px;">You must agree to the terms.</div>
+
+        <button class="btn btn-primary btn-full" id="reg-btn" onclick="doRegister()">
+          Create My Account →
+        </button>
+
+        <p style="text-align:center;margin-top:18px;font-size:13px;color:var(--text-muted);">
+          Already have an account? <a href="login.html" class="auth-link">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media(max-width:768px){
+  div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+  div[style*="background:var(--gradient-hero)"]{display:none!important}
+  #right-panel{padding:40px 24px!important}
+}
+</style>
+
+<script>
+(async () => {
+  const user = await getUser();
+  if (user) window.location.href = 'dashboard.html';
+})();
+
+function showErr(msg) {
+  document.getElementById('err-text').textContent = msg;
+  document.getElementById('err-msg').classList.add('show');
+}
+
+async function doRegister() {
+  // Clear errors
+  ['first','last','email','phone','password','password2','terms'].forEach(f => {
+    document.getElementById('e-' + f)?.classList.remove('show');
+  });
+  document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+
+  const first   = document.getElementById('first-name').value.trim();
+  const last    = document.getElementById('last-name').value.trim();
+  const email   = document.getElementById('reg-email').value.trim();
+  const phone   = document.getElementById('reg-phone').value.trim();
+  const jobTitle = document.getElementById('job-title').value.trim();
+  const orgName = document.getElementById('org-name').value.trim();
+  const pass    = document.getElementById('reg-password').value;
+  const pass2   = document.getElementById('reg-password2').value;
+  const agreed  = document.getElementById('agree-terms').checked;
+  let valid = true;
+
+  const setErr = (id, inputId) => {
+    document.getElementById('e-' + id).classList.add('show');
+    if (inputId) document.getElementById(inputId).classList.add('input-error');
+    valid = false;
+  };
+
+  if (!first)  setErr('first',    'first-name');
+  if (!last)   setErr('last',     'last-name');
+  if (!email || !email.includes('@')) setErr('email', 'reg-email');
+  if (!phone)  setErr('phone',    'reg-phone');
+  if (pass.length < 8)  setErr('password',  'reg-password');
+  if (pass !== pass2)   setErr('password2', 'reg-password2');
+  if (!agreed)          setErr('terms');
+  if (!valid) return;
+
+  const btn = document.getElementById('reg-btn');
+  btn.innerHTML = '<div class="spinner"></div> Creating account…';
+  btn.disabled = true;
+
+  const fullName = first + ' ' + last;
+
+  const { data, error } = await getSB().auth.signUp({
+    email,
+    password: pass,
+    options: {
+      data: { full_name: fullName }
+    }
+  });
+
+  if (error) {
+    showErr(error.message);
+    btn.innerHTML = 'Create My Account →';
+    btn.disabled = false;
+    return;
+  }
+
+  // Update profile with extra fields
+  if (data.user) {
+    await getSB().from('profiles').upsert({
+      id:           data.user.id,
+      full_name:    fullName,
+      phone:        phone,
+      job_title:    jobTitle,
+      organisation: orgName,
+    });
+  }
+
+  // Redirect to login with success message
+  window.location.href = 'login.html?msg=registered';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+</script>
+</body>
+</html>
