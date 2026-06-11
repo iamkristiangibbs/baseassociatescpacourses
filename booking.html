@@ -133,9 +133,9 @@ let guestOrg   = '';
 // Then create an Email Template and paste the IDs below.
 // Template variables available: {{to_name}}, {{to_email}}, {{booking_ref}},
 //   {{course_title}}, {{session_slot}}, {{amount_ugx}}
-const EMAILJS_PUBLIC_KEY   = 'YOUR_PUBLIC_KEY';    // Account → API Keys
-const EMAILJS_SERVICE_ID   = 'YOUR_SERVICE_ID';    // Email Services tab
-const EMAILJS_TEMPLATE_ID  = 'YOUR_TEMPLATE_ID';   // Email Templates tab
+const EMAILJS_PUBLIC_KEY   = 'TjRSWlV7nW6fgdO3e';    // Account → API Keys
+const EMAILJS_SERVICE_ID   = 'service_t61uwdf';    // Email Services tab
+const EMAILJS_TEMPLATE_ID  = 'template_332mlok';   // Email Templates tab
 
 // Initialise once
 if (EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
@@ -352,55 +352,26 @@ async function renderStep() {
       <!-- Auth section — login/register or logged-in badge -->
       ${authSection}
 
-      <!-- Payment method — only shown when logged in -->
+      <!-- Payment — only shown when logged in -->
       <div id="payment-section" style="display:${currentUser?'block':'none'};">
-        <p style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:12px;">Select Payment Method:</p>
-        <div class="payment-methods">
-          <div class="pay-card mtn-card" id="pm-mtn" onclick="selectMethod('mtn')">
-            <div class="pay-logo">📱</div>
-            <div class="pay-name" style="color:#C8A000;">MTN Mobile Money</div>
-            <div class="pay-sub">MTN Uganda numbers</div>
-            <div style="margin-top:10px;font-size:11px;font-weight:700;background:var(--mtn-yellow);padding:3px 10px;border-radius:50px;display:inline-block;color:#1A1A1A;">MTN MoMo</div>
-          </div>
-          <div class="pay-card airtel-card" id="pm-airtel" onclick="selectMethod('airtel')">
-            <div class="pay-logo">📱</div>
-            <div class="pay-name" style="color:var(--airtel-red);">Airtel Money</div>
-            <div class="pay-sub">Airtel Uganda numbers</div>
-            <div style="margin-top:10px;font-size:11px;font-weight:700;background:var(--airtel-red);padding:3px 10px;border-radius:50px;display:inline-block;color:var(--white);">Airtel Money</div>
-          </div>
-        </div>
 
-        <div id="phone-section" style="display:none;margin-top:20px;">
-          <div class="form-group">
-            <label id="phone-label">Mobile Money Number</label>
-            <div class="phone-input-wrap">
-              <span class="phone-prefix">+256</span>
-              <input type="tel" id="momo-phone" placeholder="7XX XXX XXX" maxlength="12"
-                oninput="this.value=this.value.replace(/[^0-9]/g,'');showUSSD()"/>
-            </div>
-            <div class="field-error" id="e-momo-phone">Enter a valid Uganda mobile number.</div>
-          </div>
-          <div class="ussd-box" id="ussd-box" style="display:none;">
-            <p style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">How to Pay</p>
-            <div class="ussd-code" id="ussd-code"></div>
-            <ol class="ussd-steps" id="ussd-steps"></ol>
-          </div>
+        <!-- Pesapal payment button -->
+        <div style="background:var(--cream);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;text-align:center;">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">You will be redirected to Pesapal to complete payment securely.</p>
+          <p style="font-size:12px;color:var(--text-muted);">Accepts MTN MoMo, Airtel Money, Visa &amp; Mastercard</p>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;font-size:1.4rem;">📱 💳</div>
         </div>
-
-        <div class="policy-note" style="margin-top:16px;"><strong>Cancellation Policy:</strong> Full refund if cancelled ≥ 7 days before start · 50% credit 3–6 days · No refund within 2 days.</div>
 
         <div class="nav-btns" style="margin-top:24px;">
           <button class="btn btn-outline-green" onclick="prevStep()">← Back</button>
-          <button class="btn btn-primary btn-lg" id="pay-btn" onclick="doPayment()">Confirm &amp; Pay UGX 100,000 →</button>
+          <button class="btn btn-primary btn-lg" id="pay-btn" onclick="doPayment()">Pay UGX 100,000 via Pesapal →</button>
         </div>
-        <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:10px;">🔒 Secure booking · Your data is protected</p>
+        <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:10px;">🔒 Secured by Pesapal · Bank-level encryption</p>
       </div>
 
       <!-- Back button when not logged in -->
       ${!currentUser ? `<div style="margin-top:16px;"><button class="btn btn-outline-green" onclick="prevStep()">← Back</button></div>` : ''}
     </div>`;
-
-    if (selectedMethod) selectMethod(selectedMethod);
 
   // ────────────────────────────────────────────────────────
   // STEP 4 — Confirmation
@@ -535,37 +506,6 @@ async function doInlineRegister() {
   renderStep();
 }
 
-// ── Payment method ────────────────────────────────────────
-function selectMethod(method) {
-  selectedMethod = method;
-  document.querySelectorAll('.pay-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('pm-' + method).classList.add('selected');
-  document.getElementById('phone-section').style.display = 'block';
-  document.getElementById('phone-label').textContent = method === 'mtn' ? 'MTN Mobile Money Number' : 'Airtel Money Number';
-  showUSSD();
-}
-
-function showUSSD() {
-  const phone   = document.getElementById('momo-phone')?.value || '';
-  const ussdBox = document.getElementById('ussd-box');
-  if (!ussdBox) return;
-  ussdBox.style.display = 'block';
-  const isMTN = selectedMethod === 'mtn';
-  document.getElementById('ussd-code').textContent = isMTN ? '*165*3#' : '*185*9#';
-  document.getElementById('ussd-steps').innerHTML = isMTN ? `
-    <li><span class="ussd-step-num">1</span>On your MTN phone dial <strong>*165*3#</strong></li>
-    <li><span class="ussd-step-num">2</span>Select <strong>Pay Bills</strong> or <strong>Pay Merchant</strong></li>
-    <li><span class="ussd-step-num">3</span>Enter Merchant Code: <strong>BASE-CPA</strong></li>
-    <li><span class="ussd-step-num">4</span>Enter amount: <strong>100,000</strong></li>
-    <li><span class="ussd-step-num">5</span>Enter your Mobile Money PIN to confirm</li>
-    <li><span class="ussd-step-num">6</span>You will get an SMS — then click <strong>Confirm & Pay</strong> below</li>` : `
-    <li><span class="ussd-step-num">1</span>On your Airtel phone dial <strong>*185*9#</strong></li>
-    <li><span class="ussd-step-num">2</span>Select <strong>Pay Bill</strong></li>
-    <li><span class="ussd-step-num">3</span>Enter Business Number: <strong>BASE-CPA</strong></li>
-    <li><span class="ussd-step-num">4</span>Enter amount: <strong>100,000</strong></li>
-    <li><span class="ussd-step-num">5</span>Enter your Airtel Money PIN to confirm</li>
-    <li><span class="ussd-step-num">6</span>You will get an SMS — then click <strong>Confirm & Pay</strong> below</li>`;
-}
 
 function applyPromo() {
   const code = document.getElementById('promo-code').value.trim().toUpperCase();
@@ -580,23 +520,19 @@ function applyPromo() {
   }
 }
 
-// ── Confirm payment ───────────────────────────────────────
+// ── Confirm payment via Pesapal ───────────────────────────
+const SUPABASE_FUNCTIONS_URL = 'https://lmcvpatdjddoiyyoyulh.supabase.co/functions/v1';
+
 async function doPayment() {
   if (!currentUser) { alert('Please sign in or create an account to complete your booking.'); return; }
-  if (!selectedMethod) { alert('Please select a payment method.'); return; }
-
-  const phone = document.getElementById('momo-phone')?.value.trim();
-  if (!phone || phone.length < 9) {
-    document.getElementById('e-momo-phone').classList.add('show');
-    document.getElementById('momo-phone').classList.add('input-error'); return;
-  }
 
   const btn = document.getElementById('pay-btn');
-  btn.innerHTML = '<div class="spinner"></div> Confirming…'; btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Preparing payment…'; btn.disabled = true;
 
-  // Re-check capacity to guard against race conditions
   const slotObj = SESSION_SLOTS.find(s => s.id === selectedSlot);
   const slotKey = slotObj ? slotObj.name + ' · ' + slotObj.time : selectedSlot;
+
+  // Re-check capacity
   const { count: takenCount } = await getSB()
     .from('bookings')
     .select('*', { count: 'exact', head: true })
@@ -606,45 +542,69 @@ async function doPayment() {
   if (takenCount >= SLOT_CAPACITY) {
     document.getElementById('pay-err-txt').textContent = 'Sorry, this session just filled up. Please go back and choose a different time slot.';
     document.getElementById('pay-err').style.display = 'flex';
-    btn.innerHTML = 'Confirm &amp; Pay UGX 100,000 →'; btn.disabled = false; return;
+    btn.innerHTML = 'Pay UGX 100,000 via Pesapal →'; btn.disabled = false; return;
   }
 
+  // Generate booking reference
   const ts  = Date.now().toString().slice(-6);
   const uid = Math.random().toString(36).substring(2,5).toUpperCase();
   bookingRef = 'BA-' + ts + '-' + uid;
 
-  const slot = SESSION_SLOTS.find(s => s.id === selectedSlot);
-
-  const { error } = await getSB().from('bookings').insert({
+  // Save a pending booking — will be confirmed on callback after payment
+  const { error: insertErr } = await getSB().from('bookings').insert({
     user_id:        currentUser.id,
     course_id:      courseData.id,
     course_title:   courseData.title,
-    session_slot:   slot ? slot.name + ' · ' + slot.time : selectedSlot,
-    status:         'confirmed',
-    payment_method: selectedMethod,
-    payment_phone:  '+256' + phone,
-    payment_status: 'paid',
+    session_slot:   slotKey,
+    status:         'pending',
+    payment_method: 'pesapal',
+    payment_status: 'pending',
     amount_ugx:     COURSE_FEE,
     booking_ref:    bookingRef,
   });
 
-  if (error) {
-    document.getElementById('pay-err-txt').textContent = 'Booking failed: ' + error.message;
+  if (insertErr) {
+    document.getElementById('pay-err-txt').textContent = 'Booking error: ' + insertErr.message;
     document.getElementById('pay-err').style.display = 'flex';
-    btn.innerHTML = 'Confirm &amp; Pay UGX 100,000 →'; btn.disabled = false; return;
+    btn.innerHTML = 'Pay UGX 100,000 via Pesapal →'; btn.disabled = false; return;
   }
 
-  // Send confirmation email (non-blocking — booking is already saved)
-  sendBookingEmail({
-    toName:      guestName,
-    toEmail:     currentUser?.email || guestEmail,
-    bookingRef:  bookingRef,
-    courseTitle: courseData.title,
-    sessionSlot: slotObj ? slotObj.name + ' · ' + slotObj.time : selectedSlot,
-    amountUgx:   COURSE_FEE,
-  });
+  // Call Edge Function to get Pesapal redirect URL
+  const nameParts = guestName.trim().split(' ');
+  const siteUrl   = window.location.origin + window.location.pathname.replace(/[^/]*$/, '').replace(/\/$/, '');
 
-  currentStep = 4; renderStep();
+  try {
+    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/pesapal`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:      'submit',
+        amount:      COURSE_FEE,
+        currency:    'UGX',
+        email:       currentUser.email || guestEmail,
+        phone:       guestPhone.replace(/\D/g,''),
+        firstName:   nameParts[0] || 'Student',
+        lastName:    nameParts.slice(1).join(' ') || 'Learner',
+        description: courseData.title.substring(0, 100),
+        siteUrl:     siteUrl,
+        merchantRef: bookingRef,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.error || !data.redirect_url) {
+      throw new Error(data.error || 'No redirect URL returned from Pesapal');
+    }
+
+    // Redirect to Pesapal payment page
+    window.location.href = data.redirect_url;
+
+  } catch (e) {
+    document.getElementById('pay-err-txt').textContent = 'Payment setup failed: ' + e.message;
+    document.getElementById('pay-err').style.display = 'flex';
+    btn.innerHTML = 'Pay UGX 100,000 via Pesapal →'; btn.disabled = false;
+  }
 }
 </script>
 
