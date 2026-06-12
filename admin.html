@@ -90,8 +90,8 @@
   <!-- STATS -->
   <div class="admin-stats">
     <div class="astat"><div class="num" id="a-accounts">—</div><div class="lbl">Registered Accounts</div><div class="sub">All sign-ups</div></div>
-    <div class="astat"><div class="num" id="a-total">—</div><div class="lbl">Total Bookings</div><div class="sub" id="a-revenue"></div></div>
-    <div class="astat"><div class="num" id="a-completed-stat">—</div><div class="lbl">Total Students</div><div class="sub">Completed a course</div></div>
+    <div class="astat"><div class="num" id="a-total">—</div><div class="lbl">Total Bookings</div><div class="sub">Confirmed &amp; completed</div></div>
+    <div class="astat"><div class="num" id="a-completed-stat">—</div><div class="lbl">Total Graduates</div><div class="sub">Completed a course</div></div>
   </div>
 
   <!-- ── TAB: ALL BOOKINGS ── -->
@@ -289,11 +289,11 @@ async function loadAllBookings() {
   if (error || !data) return;
   allBookings = data;
 
-  const total     = data.length;
-  const completed = data.filter(b => b.status === 'completed');
-  const revenue   = data.reduce((s, b) => s + (b.amount_ugx || 0), 0);
+  const confirmed  = data.filter(b => b.status === 'confirmed' || b.status === 'completed');
+  const completed  = data.filter(b => b.status === 'completed');
+  const revenue    = confirmed.reduce((s, b) => s + (b.amount_ugx || 0), 0);
 
-  document.getElementById('a-total').textContent          = total;
+  document.getElementById('a-total').textContent          = confirmed.length;
   document.getElementById('a-revenue').textContent        = 'UGX ' + revenue.toLocaleString() + ' collected';
   document.getElementById('a-completed-stat').textContent = completed.length;
 
@@ -307,7 +307,7 @@ async function loadAllStudents() {
   const { data, error } = await getSB()
     .from('profiles')
     .select('*')
-    .eq('role', 'learner')
+    .neq('role', 'admin')
     .order('created_at', { ascending: false });
   if (error || !data) return;
   allStudents = data;
