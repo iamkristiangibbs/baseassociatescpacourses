@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles.css"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     body{background:var(--cream);display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
     .callback-card{background:var(--white);border-radius:var(--radius-xl);padding:48px 40px;max-width:500px;width:90%;text-align:center;box-shadow:var(--shadow-lg)}
@@ -80,10 +81,12 @@
     }
 
     // Payment confirmed — update booking in Supabase
-    const { error } = await getSB()
+    const { error, data: updatedRows } = await getSB()
       .from('bookings')
       .update({ status: 'confirmed', payment_status: 'paid' })
-      .eq('booking_ref', ref);
+      .eq('booking_ref', ref)
+      .select('course_title, session_slot, amount_ugx')
+      .single();
 
     if (error) {
       showFail('Payment received but booking update failed. Please contact support with ref: ' + ref);
@@ -91,6 +94,25 @@
     }
 
     showSuccess(ref);
+
+    // Send booking confirmation email
+    try {
+      emailjs.init({ publicKey: 'TjRSWlV7nW6fgdO3e' });
+      const user    = await getUser();
+      const profile = user ? await getProfile(user.id) : null;
+      if (user?.email && updatedRows) {
+        await emailjs.send('service_t61uwdf', 'template_332mlok', {
+          to_name:      profile?.full_name || user.email,
+          to_email:     user.email,
+          booking_ref:  ref,
+          course_title: updatedRows.course_title,
+          session_slot: updatedRows.session_slot,
+          amount_ugx:   'UGX ' + Number(updatedRows.amount_ugx).toLocaleString(),
+        });
+      }
+    } catch (e) {
+      console.warn('Confirmation email failed:', e);
+    }
 
   } catch (e) {
     showFail('Verification error: ' + e.message + '. Reference: ' + ref);

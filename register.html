@@ -132,7 +132,22 @@
   </div>
 </div>
 
+<!-- Success Overlay -->
+<div id="success-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--white);border-radius:var(--radius-xl);padding:48px 40px;max-width:420px;width:90%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.25);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);">
+    <div style="width:72px;height:72px;background:var(--green-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px;">✓</div>
+    <h2 style="font-size:1.5rem;color:var(--green-dark);margin-bottom:8px;">Account Created!</h2>
+    <p id="success-name" style="font-size:1rem;color:var(--text-muted);margin-bottom:6px;"></p>
+    <p style="font-size:14px;color:var(--text-muted);margin-bottom:28px;line-height:1.7;">We've sent a welcome email to your inbox.<br>Please confirm your email, then sign in.</p>
+    <div style="height:4px;background:var(--cream-dark);border-radius:4px;overflow:hidden;margin-bottom:20px;">
+      <div id="progress-bar" style="height:100%;background:var(--green);width:100%;transition:width 3s linear;"></div>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);">Redirecting to login…</p>
+  </div>
+</div>
+
 <style>
+@keyframes popIn { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
 @media(max-width:768px){
   div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
   div[style*="background:var(--gradient-hero)"]{display:none!important}
@@ -145,6 +160,20 @@
   const user = await getUser();
   if (user) window.location.href = 'dashboard.html';
 })();
+
+
+function showSuccessOverlay(firstName) {
+  const overlay = document.getElementById('success-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('success-name').textContent = 'Welcome, ' + firstName + '!';
+  // Animate the progress bar down to 0 over 3s, then redirect
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.getElementById('progress-bar').style.width = '0%';
+    });
+  });
+  setTimeout(() => { window.location.href = 'login.html?msg=registered'; }, 3000);
+}
 
 function showErr(msg) {
   document.getElementById('err-text').textContent = msg;
@@ -216,8 +245,9 @@ async function doRegister() {
     });
   }
 
-  // Redirect to login with success message
-  window.location.href = 'login.html?msg=registered';
+
+  // Show success overlay then redirect
+  showSuccessOverlay(first);
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
