@@ -11,7 +11,7 @@
   <style>
     body{background:var(--cream)}
     .admin-body{max-width:1200px;margin:0 auto;padding:40px 2rem 72px}
-    .admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+    .admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
     .astat{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--radius-lg);padding:20px 24px}
     .astat .num{font-family:var(--font-display);font-size:2rem;font-weight:700;color:var(--text-dark)}
     .astat .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-top:4px}
@@ -34,7 +34,8 @@
     .note-icon{width:36px;height:36px;background:var(--danger-pale);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
     .note-name{font-size:13px;font-weight:600;color:var(--text-dark)}
     .note-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
-    @media(max-width:768px){.admin-stats{grid-template-columns:1fr 1fr}}
+    @media(max-width:900px){.admin-stats{grid-template-columns:1fr 1fr}}
+    @media(max-width:480px){.admin-stats{grid-template-columns:1fr 1fr}}
 
     /* Student modal */
     .s-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:flex-start;justify-content:center;padding:48px 16px;overflow-y:auto}
@@ -90,8 +91,9 @@
   <!-- STATS -->
   <div class="admin-stats">
     <div class="astat"><div class="num" id="a-accounts">—</div><div class="lbl">Registered Accounts</div><div class="sub">All sign-ups</div></div>
-    <div class="astat"><div class="num" id="a-total">—</div><div class="lbl">Total Bookings</div><div class="sub">Confirmed &amp; completed</div></div>
+    <div class="astat"><div class="num" id="a-students-stat">—</div><div class="lbl">Total Students</div><div class="sub">Payment confirmed</div></div>
     <div class="astat"><div class="num" id="a-completed-stat">—</div><div class="lbl">Total Graduates</div><div class="sub">Completed a course</div></div>
+    <div class="astat"><div class="num" id="a-total">—</div><div class="lbl">Total Bookings</div><div class="sub" id="a-revenue">Confirmed &amp; pending</div></div>
   </div>
 
   <!-- ── TAB: ALL BOOKINGS ── -->
@@ -289,13 +291,13 @@ async function loadAllBookings() {
   if (error || !data) return;
   allBookings = data;
 
-  const confirmed  = data.filter(b => b.status === 'confirmed' || b.status === 'completed');
-  const completed  = data.filter(b => b.status === 'completed');
-  const revenue    = confirmed.reduce((s, b) => s + (b.amount_ugx || 0), 0);
+  const active         = data.filter(b => b.status !== 'cancelled');
+  const uniqueStudents = new Set(data.filter(b => b.status === 'confirmed').map(b => b.user_id)).size;
+  const uniqueGrads    = new Set(data.filter(b => b.status === 'completed').map(b => b.user_id)).size;
 
-  document.getElementById('a-total').textContent          = confirmed.length;
-  document.getElementById('a-revenue').textContent        = 'UGX ' + revenue.toLocaleString() + ' collected';
-  document.getElementById('a-completed-stat').textContent = completed.length;
+  document.getElementById('a-total').textContent          = active.length;
+  document.getElementById('a-students-stat').textContent  = uniqueStudents;
+  document.getElementById('a-completed-stat').textContent = uniqueGrads;
 
   renderBookingsTable(data);
   renderEnrollments(data);
@@ -307,7 +309,6 @@ async function loadAllStudents() {
   const { data, error } = await getSB()
     .from('profiles')
     .select('*')
-    .neq('role', 'admin')
     .order('created_at', { ascending: false });
   if (error || !data) return;
   allStudents = data;
@@ -410,7 +411,7 @@ function filterStudentsTable() {
 function renderEnrollments(bookings) {
   const el = document.getElementById('enrollments-content');
   const counts = {};
-  bookings.filter(b => b.status === 'confirmed').forEach(b => {
+  bookings.filter(b => b.status === 'confirmed' || b.status === 'completed').forEach(b => {
     const key = b.course_id + '||' + b.course_title;
     if (!counts[key]) counts[key] = { id: b.course_id, title: b.course_title, students: [] };
     counts[key].students.push(b.profiles?.full_name || 'Unknown');
