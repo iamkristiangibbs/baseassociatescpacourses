@@ -7,6 +7,7 @@
   <link rel="icon" href="logo.png" type="image/png">
   <link rel="stylesheet" href="styles.css"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="supabase.js"></script>
 </head>
 <body>
@@ -246,6 +247,17 @@ async function doRegister() {
     });
   }
 
+
+  // Send welcome email
+  try {
+    emailjs.init({ publicKey: 'TjRSWlV7nW6fgdO3e' });
+    await emailjs.send('service_t61uwdf', 'template_welcome', {
+      to_name:  fullName,
+      to_email: email,
+    });
+  } catch (e) {
+    console.warn('Welcome email failed:', e);
+  }
 
   // Show success overlay then redirect
   showSuccessOverlay(first);
