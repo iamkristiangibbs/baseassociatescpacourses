@@ -585,7 +585,8 @@ async function confirmPayment(id, name) {
       if (email) {
         emailjs.init({ publicKey: 'TjRSWlV7nW6fgdO3e' });
         await emailjs.send('service_t61uwdf', 'template_332mlok', {
-          name:          profileData?.full_name || name || 'Student',
+          name:          'Base Associates CPA',
+          to_name:       profileData?.full_name || name || 'Student',
           to_email:      email,
           booking_ref:   booking.booking_ref,
           course_title:  booking.course_title,

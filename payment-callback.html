@@ -103,7 +103,8 @@
       const profile = user ? await getProfile(user.id) : null;
       if (user?.email && updatedRows) {
         await emailjs.send('service_t61uwdf', 'template_332mlok', {
-          name:          profile?.full_name || user.email,
+          name:          'Base Associates CPA',
+          to_name:       profile?.full_name || user.email,
           to_email:      user.email,
           booking_ref:   ref,
           course_title:  updatedRows.course_title,
