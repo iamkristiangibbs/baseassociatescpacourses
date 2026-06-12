@@ -251,9 +251,10 @@ async function doRegister() {
   // Send welcome email
   try {
     emailjs.init({ publicKey: 'TjRSWlV7nW6fgdO3e' });
-    await emailjs.send('service_t61uwdf', 'template_welcome', {
-      to_name:  fullName,
-      to_email: email,
+    await emailjs.send('service_t61uwdf', 'template_dzlwnnd', {
+      to_name:       fullName,
+      to_email:      email,
+      dashboard_url: 'https://baseassociatescpacourses.netlify.app/dashboard.html',
     });
   } catch (e) {
     console.warn('Welcome email failed:', e);

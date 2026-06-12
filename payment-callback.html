@@ -102,12 +102,13 @@
       const profile = user ? await getProfile(user.id) : null;
       if (user?.email && updatedRows) {
         await emailjs.send('service_t61uwdf', 'template_332mlok', {
-          to_name:      profile?.full_name || user.email,
-          to_email:     user.email,
-          booking_ref:  ref,
-          course_title: updatedRows.course_title,
-          session_slot: updatedRows.session_slot,
-          amount_ugx:   'UGX ' + Number(updatedRows.amount_ugx).toLocaleString(),
+          to_name:       profile?.full_name || user.email,
+          to_email:      user.email,
+          booking_ref:   ref,
+          course_title:  updatedRows.course_title,
+          session_slot:  updatedRows.session_slot,
+          amount_ugx:    'UGX ' + Number(updatedRows.amount_ugx).toLocaleString(),
+          dashboard_url: 'https://baseassociatescpacourses.netlify.app/dashboard.html',
         });
       }
     } catch (e) {

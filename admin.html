@@ -585,12 +585,13 @@ async function confirmPayment(id, name) {
       if (email) {
         emailjs.init({ publicKey: 'TjRSWlV7nW6fgdO3e' });
         await emailjs.send('service_t61uwdf', 'template_332mlok', {
-          to_name:      profileData?.full_name || name || 'Student',
-          to_email:     email,
-          booking_ref:  booking.booking_ref,
-          course_title: booking.course_title,
-          session_slot: booking.session_slot,
-          amount_ugx:   'UGX ' + Number(booking.amount_ugx || 100000).toLocaleString(),
+          to_name:       profileData?.full_name || name || 'Student',
+          to_email:      email,
+          booking_ref:   booking.booking_ref,
+          course_title:  booking.course_title,
+          session_slot:  booking.session_slot,
+          amount_ugx:    'UGX ' + Number(booking.amount_ugx || 100000).toLocaleString(),
+          dashboard_url: 'https://baseassociatescpacourses.netlify.app/dashboard.html',
         });
       }
     }
