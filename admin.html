@@ -7,6 +7,7 @@
   <link rel="icon" href="logo.png" type="image/png">
   <link rel="stylesheet" href="styles.css"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="supabase.js"></script>
   <style>
     body{background:var(--cream)}
@@ -287,7 +288,7 @@ function populateCourseSelects() {
 async function loadAllBookings() {
   const { data, error } = await getSB()
     .from('bookings')
-    .select('*, profiles(full_name, phone, organisation, job_title)')
+    .select('*, profiles(full_name, phone, email, organisation, job_title)')
     .order('booked_at', { ascending: false });
   if (error || !data) return;
   allBookings = data;
@@ -574,6 +575,26 @@ async function confirmPayment(id, name) {
   if (!confirm('Confirm manual payment received from ' + (name || 'this student') + '? This will mark their booking as confirmed and paid.')) return;
   const { error } = await getSB().from('bookings').update({ status: 'confirmed', payment_status: 'paid' }).eq('id', id);
   if (error) { alert('Error: ' + error.message); return; }
+
+  // Send confirmation email
+  try {
+    const booking = allBookings.find(b => b.id === id);
+    const email   = booking?.profiles?.email;
+    if (booking && email) {
+      emailjs.init({ publicKey: 'TjRSWlV7nW6fgdO3e' });
+      await emailjs.send('service_t61uwdf', 'template_332mlok', {
+        to_name:      booking.profiles?.full_name || name || 'Student',
+        to_email:     email,
+        booking_ref:  booking.booking_ref,
+        course_title: booking.course_title,
+        session_slot: booking.session_slot,
+        amount_ugx:   'UGX ' + Number(booking.amount_ugx || 100000).toLocaleString(),
+      });
+    }
+  } catch (e) {
+    console.warn('Confirmation email failed:', e);
+  }
+
   await loadAllBookings();
 }
 

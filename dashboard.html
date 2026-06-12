@@ -321,12 +321,12 @@ async function loadNotes(userId) {
     .from('bookings')
     .select('course_id')
     .eq('user_id', userId || (await getUser()).id)
-    .eq('status', 'confirmed');
+    .in('status', ['confirmed', 'completed']);
 
   const el = document.getElementById('notes-area');
 
   if (!bookings || !bookings.length) {
-    el.innerHTML = `<div class="empty-state"><div class="icon">📄</div><p>No notes yet. Notes will appear here once your instructor uploads materials for your enrolled courses.</p></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="icon">📄</div><p>Course notes are available once your payment is confirmed. Contact us if you've already paid.</p></div>`;
     document.getElementById('notes-count').textContent = '';
     return;
   }
