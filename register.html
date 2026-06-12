@@ -237,14 +237,18 @@ async function doRegister() {
 
   // Update profile with extra fields
   if (data.user) {
-    await getSB().from('profiles').upsert({
-      id:           data.user.id,
-      full_name:    fullName,
-      phone:        phone,
-      job_title:    jobTitle,
-      organisation: orgName,
-      email:        email,
-    });
+    try {
+      await getSB().from('profiles').upsert({
+        id:           data.user.id,
+        full_name:    fullName,
+        phone:        phone,
+        job_title:    jobTitle,
+        organisation: orgName,
+        email:        email,
+      });
+    } catch (e) {
+      console.warn('Profile upsert failed:', e);
+    }
   }
 
 
