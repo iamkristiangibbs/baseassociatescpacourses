@@ -146,7 +146,7 @@ async function sendBookingEmail({ toName, toEmail, bookingRef, courseTitle, sess
   if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') return; // not configured yet
   try {
     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      to_name:      toName,
+      name:         toName,
       to_email:     toEmail,
       booking_ref:  bookingRef,
       course_title: courseTitle,

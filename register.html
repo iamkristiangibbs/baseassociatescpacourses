@@ -139,7 +139,8 @@
     <div style="width:72px;height:72px;background:var(--green-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px;">✓</div>
     <h2 style="font-size:1.5rem;color:var(--green-dark);margin-bottom:8px;">Account Created!</h2>
     <p id="success-name" style="font-size:1rem;color:var(--text-muted);margin-bottom:6px;"></p>
-    <p style="font-size:14px;color:var(--text-muted);margin-bottom:28px;line-height:1.7;">We've sent a welcome email to your inbox.<br>Please confirm your email, then sign in.</p>
+    <p style="font-size:14px;color:var(--text-muted);margin-bottom:12px;line-height:1.7;">We've sent a welcome email to your inbox.<br>Please confirm your email, then sign in.</p>
+    <p style="font-size:12px;color:#b45309;background:#fef3c7;border-radius:8px;padding:8px 12px;margin-bottom:16px;">📩 Don't see it? Check your <strong>Spam / Junk</strong> folder.</p>
     <div style="height:4px;background:var(--cream-dark);border-radius:4px;overflow:hidden;margin-bottom:20px;">
       <div id="progress-bar" style="height:100%;background:var(--green);width:100%;transition:width 3s linear;"></div>
     </div>
@@ -256,7 +257,7 @@ async function doRegister() {
   try {
     emailjs.init({ publicKey: 'TjRSWlV7nW6fgdO3e' });
     await emailjs.send('service_t61uwdf', 'template_dzlwnnd', {
-      to_name:       fullName,
+      name:          fullName,
       to_email:      email,
       dashboard_url: 'https://baseassociatescpacourses.netlify.app/dashboard.html',
     });
