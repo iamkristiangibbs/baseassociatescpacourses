@@ -92,8 +92,8 @@
   <div class="admin-stats">
     <div class="astat"><div class="num" id="a-accounts">—</div><div class="lbl">Registered Accounts</div><div class="sub">All sign-ups</div></div>
     <div class="astat"><div class="num" id="a-students-stat">—</div><div class="lbl">Total Students</div><div class="sub">Payment confirmed</div></div>
+    <div class="astat"><div class="num" id="a-total">—</div><div class="lbl">Total Bookings</div><div class="sub">Confirmed &amp; pending</div></div>
     <div class="astat"><div class="num" id="a-completed-stat">—</div><div class="lbl">Total Graduates</div><div class="sub">Completed a course</div></div>
-    <div class="astat"><div class="num" id="a-total">—</div><div class="lbl">Total Bookings</div><div class="sub" id="a-revenue">Confirmed &amp; pending</div></div>
   </div>
 
   <!-- ── TAB: ALL BOOKINGS ── -->
@@ -268,7 +268,8 @@ let allStudents = [];
     `<div class="nav-avatar">${(profile.full_name||'A')[0]}</div>&nbsp;<span style="font-size:13px;font-weight:600;color:var(--green);">${profile.full_name}</span>`;
 
   populateCourseSelects();
-  await Promise.all([loadAllBookings(), loadAllStudents(), loadNotes()]);
+  await loadAllBookings();
+  await Promise.all([loadAllStudents(), loadNotes()]);
 })();
 
 // ── Populate course dropdowns ─────────────────────────────
@@ -292,7 +293,7 @@ async function loadAllBookings() {
   allBookings = data;
 
   const active         = data.filter(b => b.status !== 'cancelled');
-  const uniqueStudents = new Set(data.filter(b => b.status === 'confirmed').map(b => b.user_id)).size;
+  const uniqueStudents = new Set(data.filter(b => b.status === 'confirmed' || b.status === 'completed').map(b => b.user_id)).size;
   const uniqueGrads    = new Set(data.filter(b => b.status === 'completed').map(b => b.user_id)).size;
 
   document.getElementById('a-total').textContent          = active.length;
@@ -313,7 +314,13 @@ async function loadAllStudents() {
   if (error || !data) return;
   allStudents = data;
   document.getElementById('a-accounts').textContent = data.length;
-  renderStudentsTable(data);
+
+  // Only show students who have at least one confirmed or completed booking
+  const paidUserIds = new Set(
+    allBookings.filter(b => b.status === 'confirmed' || b.status === 'completed').map(b => b.user_id)
+  );
+  const paidStudents = data.filter(s => paidUserIds.has(s.id));
+  renderStudentsTable(paidStudents);
 }
 
 // ── Render bookings table ─────────────────────────────────
